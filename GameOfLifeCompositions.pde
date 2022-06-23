@@ -33,6 +33,9 @@ int probabilityOfCellsBeingAlive = 15; // In percent, default is 15
 //
 int totalNumberOfIterations = 1;
 int currentNumberOfIterations = 0;
+float timeBetweenIterations = 1000;  // in ms
+int lastRecordedTime = 0;
+boolean iteratingForever = false; // If true, iterates until manually stopped
 
 //
 // CONTROL P5 VARIABLES
@@ -43,6 +46,8 @@ String ChanceOfCellsBeingAlive = "Chance of cells being alive(%)";
 String ClearGrid = "Clear";
 String GameOfLife = "Game Of life";
 String TotalIterations = "Number of iterations to queue";
+String TimeBetweenIterations = "Time between iterations(seconds)";
+String IterateForever = "Iterate Forever";
 
 
 void setup(){
@@ -81,6 +86,8 @@ void draw(){
   line(halfwayLineX,0,halfwayLineX,height);
   strokeWeight(1);
   
+  background(200);
+  
   // Drawing grid
   for(int i = 0; i < cellsPerRow; i++){
     for(int j = 0; j < cellsPerColumn; j++){
@@ -93,6 +100,7 @@ void draw(){
     }
   }
   
+  // Allowing the user to click on the grid to draw
   if(mousePressed && mouseX < halfwayLineX){
     // Mapping coordinate clicked to cell
     int xCellOver = int(map(mouseX, 0, halfwayLineX, 0, cellsPerRow));
@@ -111,6 +119,26 @@ void draw(){
         }
       }    
   }
+    
+  // Iteration timer
+  if((millis() - lastRecordedTime > timeBetweenIterations) && ((currentNumberOfIterations < totalNumberOfIterations) || iteratingForever)){
+    gameOfLife();
+    lastRecordedTime = millis();
+    currentNumberOfIterations++;
+  }
+  
+  
+  // Iteration Text
+  textSize(24);
+  fill(0);
+  text("Current Iteration: ", width*34/40,height/40);
+  String currentIterationText = " " + currentNumberOfIterations;
+  text(currentIterationText, width*38/40, height/40);
+  // Display iterating forever text when iterating forever toggle is on
+  if(iteratingForever){
+    text("ITERATING FOREVER", width*34/40, height*2/40);
+  }
+    
     
 }
 
@@ -221,15 +249,15 @@ void setupControls(){
                                                                                                                          .setColor(0);
   // Clear Grid                                                                                                                   
   controlP5.addBang(controlP5, ClearGrid, ClearGrid, width*3/36, 0, width/36, width/36).setGroup(controlGroup1)
-                                                                                      .setFont(SmallerUIFont)
-                                                                                      .getCaptionLabel()
-                                                                                      .setColor(0);        
+                                                                                       .setFont(SmallerUIFont)
+                                                                                       .getCaptionLabel()
+                                                                                       .setColor(0);        
                                                                                       
   // Game Of Life                                                                                                                  
   controlP5.addBang(controlP5, GameOfLife, GameOfLife, width*5/36, 0, width/36, width/36).setGroup(controlGroup1)
-                                                                                      .setFont(SmallerUIFont)
-                                                                                      .getCaptionLabel()
-                                                                                      .setColor(0);   
+                                                                                         .setFont(SmallerUIFont)
+                                                                                         .getCaptionLabel()
+                                                                                         .setColor(0);   
                                                                                       
   // Number of iterations slider
   controlP5.addSlider(TotalIterations, 1, 100, 1, 0, width*3/36 , width/10, height/36).setGroup(controlGroup1)
@@ -238,6 +266,21 @@ void setupControls(){
                                                                                       .showTickMarks(false)
                                                                                       .getCaptionLabel()
                                                                                       .setColor(0);
+                                                                                      
+  // Time between iterations slider
+  controlP5.addSlider(TimeBetweenIterations, .01, 5, 1, 0, width*4/36 , width/10, height/36).setGroup(controlGroup1)
+                                                                                            .setFont(SmallerUIFont)
+                                                                                            .setNumberOfTickMarks(500)
+                                                                                            .showTickMarks(false)
+                                                                                            .getCaptionLabel()
+                                                                                            .setColor(0);
+                                                                                      
+  // Iterate forever toggle                                                                                                        
+  controlP5.addBang(controlP5, IterateForever, IterateForever, width*8/36, 0, width/36, width/36).setGroup(controlGroup1)
+                                                                                      .setFont(SmallerUIFont)
+                                                                                      .getCaptionLabel()
+                                                                                      .setColor(0);                                                                                         
+                                                                                      
 }
 
 
@@ -252,15 +295,23 @@ void controlEvent(ControlEvent theEvent){
       probabilityOfCellsBeingAlive = (int)controlP5.getController(ChanceOfCellsBeingAlive).getValue();
     }
     else if(theEvent.getController().getName() == ClearGrid){ // Clear Grid
+    currentNumberOfIterations = 0;
       clearGrid();
     }
     else if(theEvent.getController().getName() == GameOfLife){ // Game of Life
       gameOfLife();
+      currentNumberOfIterations = 0;
+      lastRecordedTime = millis();
     }
     else if(theEvent.getController().getName() == TotalIterations){ // Number of iterations
-      currentNumberOfIterations = 0;
       totalNumberOfIterations = (int)controlP5.getController(TotalIterations).getValue();
+      currentNumberOfIterations = totalNumberOfIterations; // Makes it so that the game doesn't start until the GameOfLife button is pressed
     }
-    
+    else if(theEvent.getController().getName() == TimeBetweenIterations){ // Time between iterations
+      timeBetweenIterations = controlP5.getController(TimeBetweenIterations).getValue() * 1000;
+    }    
+    else if(theEvent.getController().getName() == IterateForever){ // Iterate Forever
+       iteratingForever = !iteratingForever;
+    }    
   }
 }
