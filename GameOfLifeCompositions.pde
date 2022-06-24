@@ -10,15 +10,17 @@ SURF 2022, jrkm
 //
 
 // Parameters for grid size
-int cellsPerRow    = 50;
-int cellsPerColumn = 50;
+int cellsPerRow    = 10;
+int cellsPerColumn = 10;
 float cellWidth;
 float cellHeight;
 int halfwayLineX; // X coordinate for line that cuts screen in half
+int maxCellsPerRow = 150;
+int maxCellsPerColumn = 150;
 
 // Cell Arrays
-int[][] cells;
-int[][] cellsBuffer;
+Cell[][] cells;
+Cell[][] cellsBuffer;
 
 // Cell colors
 color aliveColor = color(103,102,165);
@@ -31,11 +33,12 @@ int probabilityOfCellsBeingAlive = 15; // In percent, default is 15
 //
 // GAME OF LIFE VARIABLES
 //
-int totalNumberOfIterations = 1;
+int totalNumberOfIterations = 0;
 int currentNumberOfIterations = 0;
 float timeBetweenIterations = 1000;  // in ms
 int lastRecordedTime = 0;
 boolean iteratingForever = false; // If true, iterates until manually stopped
+boolean countingNeighborVotes = false; // If true, highlights each cell with the most neighbors
 
 //
 // CONTROL P5 VARIABLES
@@ -44,10 +47,13 @@ ControlP5 controlP5;
 String RandomizeGrid = "Randomize";
 String ChanceOfCellsBeingAlive = "Chance of cells being alive(%)";
 String ClearGrid = "Clear";
-String GameOfLife = "Game Of life";
+String OneIteration = "One iteration";
+String MultipleIterations = "Multiple iterations";
 String TotalIterations = "Number of iterations to queue";
 String TimeBetweenIterations = "Time between iterations(seconds)";
-String IterateForever = "Iterate Forever";
+String InfiniteIterations = "Infinite iterations";
+String CellsPerRowController = "Cells Per Row";
+String CellsPerColumnController = "Cells Per Column";
 
 
 void setup(){
@@ -62,12 +68,12 @@ void setup(){
   halfwayLineX = width/2 + 4;
   
   // Initializing arrays of cells to all be 0 at start
-  cells = new int[cellsPerRow][cellsPerColumn];
-  cellsBuffer = new int[cellsPerRow][cellsPerColumn];
-  for(int i = 0; i < cellsPerRow; i++){
-    for(int j = 0; j < cellsPerColumn; j++){
-      cells[i][j] = 0;
-      cellsBuffer[i][j] = cells[i][j];
+  cells = new Cell[maxCellsPerRow][maxCellsPerColumn];
+  cellsBuffer = new Cell[maxCellsPerRow][maxCellsPerColumn];
+  for(int i = 0; i < maxCellsPerRow; i++){
+    for(int j = 0; j < maxCellsPerColumn; j++){
+      cells[i][j] = new Cell(i*cellWidth, j*cellHeight, cellWidth, cellHeight, false);
+      cellsBuffer[i][j] = new Cell(cells[i][j]);
     }
   }
   
@@ -80,48 +86,47 @@ void setup(){
 }
 
 
-void draw(){
+void draw(){  
+  background(200);
   // Draws line to cut screen in half for controls
   strokeWeight(8);
   line(halfwayLineX,0,halfwayLineX,height);
   strokeWeight(1);
   
-  background(200);
-  
   // Drawing grid
+  
+  if(countingNeighborVotes){
+    countNeighbors();
+  }
+
   for(int i = 0; i < cellsPerRow; i++){
     for(int j = 0; j < cellsPerColumn; j++){
-      if(cells[i][j] == 0){
-        fill(deadColor);
-      } else{
-        fill(aliveColor);
-      }
-      rect(i * cellWidth, j * cellHeight, cellWidth, cellHeight);
+      cells[i][j].drawCell();
     }
   }
   
   // Allowing the user to click on the grid to draw
-  if(mousePressed && mouseX < halfwayLineX){
+  if(mousePressed && mouseX < halfwayLineX && mouseX > 0){
     // Mapping coordinate clicked to cell
     int xCellOver = int(map(mouseX, 0, halfwayLineX, 0, cellsPerRow));
     int yCellOver = int(map(mouseY, 0, height, 0, cellsPerColumn));
     // Checking to see if cell is alive or dead
-    if(cellsBuffer[xCellOver][yCellOver] == 0){
-      cells[xCellOver][yCellOver] = 1;
+    if(cellsBuffer[xCellOver][yCellOver].isDead()){
+      cells[xCellOver][yCellOver].revive();
     } else {
-      cells[xCellOver][yCellOver] = 0;
+      cells[xCellOver][yCellOver].kill();
     }
   } else if(!mousePressed){
     // On mouse release, update arrays to match again
       for(int i = 0; i < cellsPerRow; i++){
         for(int j = 0; j < cellsPerColumn; j++){
-          cellsBuffer[i][j] = cells[i][j];
+          cellsBuffer[i][j].copyCell(cells[i][j]);
         }
       }    
   }
-    
+  
   // Iteration timer
-  if((millis() - lastRecordedTime > timeBetweenIterations) && ((currentNumberOfIterations < totalNumberOfIterations) || iteratingForever)){
+  if((millis() - lastRecordedTime > timeBetweenIterations) && ( currentNumberOfIterations < totalNumberOfIterations|| iteratingForever)){
     gameOfLife();
     lastRecordedTime = millis();
     currentNumberOfIterations++;
@@ -131,9 +136,8 @@ void draw(){
   // Iteration Text
   textSize(24);
   fill(0);
-  text("Current Iteration: ", width*34/40,height/40);
-  String currentIterationText = " " + currentNumberOfIterations;
-  text(currentIterationText, width*38/40, height/40);
+  String currentIterationText = "Current Iteration:  " + currentNumberOfIterations + " / " + totalNumberOfIterations;
+  text(currentIterationText, width*34/40,height/40);
   // Display iterating forever text when iterating forever toggle is on
   if(iteratingForever){
     text("ITERATING FOREVER", width*34/40, height*2/40);
@@ -148,7 +152,7 @@ void gameOfLife(){
   // Double check that arrays match up
     for(int i = 0; i < cellsPerRow; i++){
       for(int j = 0; j < cellsPerColumn; j++){
-        cellsBuffer[i][j] = cells[i][j];
+        cellsBuffer[i][j].copyCell(cells[i][j]);
       }
     }
     
@@ -164,7 +168,7 @@ void gameOfLife(){
               // Makes sure to check against self
               if((cellX != neighborX) || (cellY != neighborY)){
                 // If neighbor is alive, count them
-                if(cellsBuffer[neighborX][neighborY] == 1){
+                if(cellsBuffer[neighborX][neighborY].isAlive()){
                   neighbors++;
                 } // End of if(checking if neighbor alive)
               } // End of if(checking against self)
@@ -174,19 +178,21 @@ void gameOfLife(){
         
         // After checking neighbors, apply rules
         // If the cell is alive
-        if(cellsBuffer[cellX][cellY] == 1){
+        if(cellsBuffer[cellX][cellY].isAlive()){
           // If has less than 2 neighbors, or more than 3, kill it
           if(neighbors < 2 || neighbors > 3){
-            cells[cellX][cellY] = 0;
+            cells[cellX][cellY].kill();
           } 
         }else{ // Else, the cell is dead
           //If it has 3 neighbors, bring it to life
           if(neighbors == 3){
-            cells[cellX][cellY] = 1;
+            cells[cellX][cellY].revive();
           }
         }
+        cells[cellX][cellY].setNumberOfNeighbors(neighbors);
       } // End of cellY traversal
     } // End of cellX traversal    
+    //countingNeighborVotes = true;
 }
 
 
@@ -194,10 +200,10 @@ void gameOfLife(){
 void generateRandomCells(){
   for(int i = 0; i < cellsPerRow; i++){
     for(int j = 0; j < cellsPerColumn; j++){
-      cells[i][j] = 0; // Initialize entire array to be dead at start
+      cells[i][j].kill(); // Initialize entire array to be dead at start
       float isAlive = random(100);
       if(isAlive < probabilityOfCellsBeingAlive){
-        cells[i][j] = 1;
+        cells[i][j].revive();
       }
     }
   }
@@ -208,11 +214,54 @@ void generateRandomCells(){
 void clearGrid(){
   for(int i = 0; i < cellsPerRow; i++){
     for(int j = 0; j < cellsPerColumn; j++){
-      cells[i][j] = 0; // Set cell to be dead
+      cells[i][j].kill(); // Set cell to be dead
     }
   }
 }
 
+
+// Counts the neighbors of each cell, then marks the cells with the most neighbors in each column
+void countNeighbors(){
+  for(int i = 0; i < cellsPerRow; i++){
+    int maximumNeighbors = 0; // The highest number of neighbors in each column
+    int currentCellsNeighbors = 0; // The current cells neighbor count
+    for(int j = 0; j < cellsPerColumn; j++){
+      currentCellsNeighbors = cells[i][j].getNumberOfNeighbors();
+      if(currentCellsNeighbors >= maximumNeighbors){
+        maximumNeighbors = currentCellsNeighbors;
+      }
+    }
+    // Marks the cells that have the most neighbors
+    for(int j = 0; j < cellsPerColumn; j++){
+      if(cells[i][j].getNumberOfNeighbors() == maximumNeighbors){
+        cells[i][j].hasMostNeighbors(true);  // If has most neighbors
+      } else {
+        cells[i][j].hasMostNeighbors(false); // If doesn't have most neighbors
+      }
+    }
+  }
+}
+
+
+// Resizes the grid when the number of cells in the rows/columns are changed
+void resizeGrid(int newCellsPerRow, int newCellsPerColumn){
+  cellsPerRow = newCellsPerRow;
+  cellsPerColumn = newCellsPerColumn;
+  for(int i = 0; i < cellsPerRow; i++){
+    for(int j = 0; j < cellsPerColumn; j++){
+      cellWidth = (width/2) / cellsPerRow;
+      cellHeight = height / cellsPerColumn;
+      cells[i][j].setWidth(cellWidth);
+      cells[i][j].setHeight(cellHeight);
+      cells[i][j].setCellX(cellWidth * i);
+      cells[i][j].setCellY(cellHeight * j);
+      cellsBuffer[i][j].copyCell(cells[i][j]);
+    }
+  }
+  
+  cellsPerRow = newCellsPerRow;
+  cellsPerColumn = newCellsPerColumn;
+}
 
 
 //
@@ -240,43 +289,66 @@ void setupControls(){
                                                                                       .setFont(SmallerUIFont)
                                                                                       .getCaptionLabel()
                                                                                       .setColor(0);
+                                                                                      
   // % Chance of Being Alive Slider
-  controlP5.addSlider(ChanceOfCellsBeingAlive, 1, 100, probabilityOfCellsBeingAlive, 0, width*2/36 , width/10, height/36).setGroup(controlGroup1)
+  controlP5.addSlider(ChanceOfCellsBeingAlive, 1, 100, probabilityOfCellsBeingAlive, 0, width*6/36 , width/10, height/36).setGroup(controlGroup1)
                                                                                                                          .setFont(SmallerUIFont)
                                                                                                                          .setNumberOfTickMarks(100)
                                                                                                                          .showTickMarks(false)
                                                                                                                          .getCaptionLabel()
                                                                                                                          .setColor(0);
+                                                                                                                         
   // Clear Grid                                                                                                                   
   controlP5.addBang(controlP5, ClearGrid, ClearGrid, width*3/36, 0, width/36, width/36).setGroup(controlGroup1)
                                                                                        .setFont(SmallerUIFont)
                                                                                        .getCaptionLabel()
                                                                                        .setColor(0);        
-                                                                                      
-  // Game Of Life                                                                                                                  
-  controlP5.addBang(controlP5, GameOfLife, GameOfLife, width*5/36, 0, width/36, width/36).setGroup(controlGroup1)
-                                                                                         .setFont(SmallerUIFont)
-                                                                                         .getCaptionLabel()
-                                                                                         .setColor(0);   
-                                                                                      
+                                                                                                                                      
   // Number of iterations slider
-  controlP5.addSlider(TotalIterations, 1, 100, 1, 0, width*3/36 , width/10, height/36).setGroup(controlGroup1)
+  controlP5.addSlider(TotalIterations, 1, 100, 1, 0, width*7/36 , width/10, height/36).setGroup(controlGroup1)
                                                                                       .setFont(SmallerUIFont)
                                                                                       .setNumberOfTickMarks(100)
                                                                                       .showTickMarks(false)
                                                                                       .getCaptionLabel()
-                                                                                      .setColor(0);
+                                                                                      .setColor(0);  
                                                                                       
   // Time between iterations slider
-  controlP5.addSlider(TimeBetweenIterations, .01, 5, 1, 0, width*4/36 , width/10, height/36).setGroup(controlGroup1)
+  controlP5.addSlider(TimeBetweenIterations, .01, 5, 1, 0, width*8/36 , width/10, height/36).setGroup(controlGroup1)
                                                                                             .setFont(SmallerUIFont)
                                                                                             .setNumberOfTickMarks(500)
                                                                                             .showTickMarks(false)
                                                                                             .getCaptionLabel()
                                                                                             .setColor(0);
-                                                                                      
+                                                                                            
+  // Cells Per Row Slider
+  controlP5.addSlider(CellsPerRowController, 10, 150, 10, 0, width*9/36 , width/10, height/36).setGroup(controlGroup1)
+                                                                                            .setFont(SmallerUIFont)
+                                                                                            .setNumberOfTickMarks(maxCellsPerRow-9)
+                                                                                            .showTickMarks(false)
+                                                                                            .getCaptionLabel()
+                                                                                            .setColor(0);
+                                                                                            
+  // Cells Per Column Slider
+  controlP5.addSlider(CellsPerColumnController, 10, 150, 10, 0, width*10/36 , width/10, height/36).setGroup(controlGroup1)
+                                                                                            .setFont(SmallerUIFont)
+                                                                                            .setNumberOfTickMarks(maxCellsPerColumn-9)
+                                                                                            .showTickMarks(false)
+                                                                                            .getCaptionLabel()
+                                                                                            .setColor(0);                                                                                       
+  // One iteration                                                                                                                  
+  controlP5.addBang(controlP5, OneIteration, OneIteration, 0, width*3/36, width/36, width/36).setGroup(controlGroup1)
+                                                                                         .setFont(SmallerUIFont)
+                                                                                         .getCaptionLabel()
+                                                                                         .setColor(0);   
+                                                                                         
+  // Multiple iterations                                                                                                                 
+  controlP5.addBang(controlP5, MultipleIterations, MultipleIterations, width*4/36, width*3/36, width/36, width/36).setGroup(controlGroup1)
+                                                                                         .setFont(SmallerUIFont)
+                                                                                         .getCaptionLabel()
+                                                                                         .setColor(0);        
+                                                                                         
   // Iterate forever toggle                                                                                                        
-  controlP5.addBang(controlP5, IterateForever, IterateForever, width*8/36, 0, width/36, width/36).setGroup(controlGroup1)
+  controlP5.addBang(controlP5, InfiniteIterations, InfiniteIterations, width*9/36, width*3/36, width/36, width/36).setGroup(controlGroup1)
                                                                                       .setFont(SmallerUIFont)
                                                                                       .getCaptionLabel()
                                                                                       .setColor(0);                                                                                         
@@ -290,28 +362,43 @@ void controlEvent(ControlEvent theEvent){
   
     if(theEvent.getController().getName() == RandomizeGrid){ // Randomizing Grid
       generateRandomCells();
+      currentNumberOfIterations = 0;
+      totalNumberOfIterations = 0;
     }
     else if(theEvent.getController().getName() == ChanceOfCellsBeingAlive){ // Changing % of cells that are likely to be alive
       probabilityOfCellsBeingAlive = (int)controlP5.getController(ChanceOfCellsBeingAlive).getValue();
     }
     else if(theEvent.getController().getName() == ClearGrid){ // Clear Grid
-    currentNumberOfIterations = 0;
-      clearGrid();
-    }
-    else if(theEvent.getController().getName() == GameOfLife){ // Game of Life
-      gameOfLife();
       currentNumberOfIterations = 0;
+      totalNumberOfIterations = 0;
+      clearGrid();
+      iteratingForever = false;
+      
+    }
+    else if(theEvent.getController().getName() == OneIteration){ // Single iteration
+      currentNumberOfIterations = 1;
+      totalNumberOfIterations = 1;
+      gameOfLife();
       lastRecordedTime = millis();
     }
-    else if(theEvent.getController().getName() == TotalIterations){ // Number of iterations
+    else if(theEvent.getController().getName() == MultipleIterations){ // Multiple Iterations
+      currentNumberOfIterations = 0;
+      currentNumberOfIterations++;
+      gameOfLife();
       totalNumberOfIterations = (int)controlP5.getController(TotalIterations).getValue();
-      currentNumberOfIterations = totalNumberOfIterations; // Makes it so that the game doesn't start until the GameOfLife button is pressed
+      lastRecordedTime = millis();    
     }
     else if(theEvent.getController().getName() == TimeBetweenIterations){ // Time between iterations
       timeBetweenIterations = controlP5.getController(TimeBetweenIterations).getValue() * 1000;
     }    
-    else if(theEvent.getController().getName() == IterateForever){ // Iterate Forever
+    else if(theEvent.getController().getName() == InfiniteIterations){ // Iterate Forever
        iteratingForever = !iteratingForever;
-    }    
+    }
+    else if(theEvent.getController().getName() == CellsPerRowController){ // Adjusts number of cells per row
+      resizeGrid((int)controlP5.getController(CellsPerRowController).getValue(), cellsPerColumn);
+    }   
+    else if(theEvent.getController().getName() == CellsPerColumnController){ // Adjusts number of cells per column
+      resizeGrid(cellsPerRow, (int)controlP5.getController(CellsPerColumnController).getValue());
+    }   
   }
 }
