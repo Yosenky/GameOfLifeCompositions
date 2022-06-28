@@ -38,7 +38,8 @@ int currentNumberOfIterations = 0;
 float timeBetweenIterations = 1000;  // in ms
 int lastRecordedTime = 0;
 boolean iteratingForever = false; // If true, iterates until manually stopped
-boolean countingNeighborVotes = false; // If true, highlights each cell with the most neighbors
+boolean showingNeighborVotes = false; // If true, highlights each cell with the most neighbors
+boolean lookingForCellWithMostNeighbors = true; // If true, search for first cell with most neighbors
 
 //
 // CONTROL P5 VARIABLES
@@ -54,6 +55,11 @@ String TimeBetweenIterations = "Time between iterations(seconds)";
 String InfiniteIterations = "Infinite iterations";
 String CellsPerRowController = "Cells Per Row";
 String CellsPerColumnController = "Cells Per Column";
+String ShowingNeighbors = "Show cells with most neighbors";
+
+color activeToggleColor = color(14,220,55); // Color when toggle is active
+color inactiveToggleColor = color(0,0,0); // Color when toggle is inactive
+color hoveredToggleColor = color(80,80,80); // Color when toggle is being hovered over
 
 
 void setup(){
@@ -94,16 +100,12 @@ void draw(){
   strokeWeight(1);
   
   // Drawing grid
-  
-  if(countingNeighborVotes){
-    countNeighbors();
-  }
-
   for(int i = 0; i < cellsPerRow; i++){
     for(int j = 0; j < cellsPerColumn; j++){
       cells[i][j].drawCell();
     }
   }
+ 
   
   // Allowing the user to click on the grid to draw
   if(mousePressed && mouseX < halfwayLineX && mouseX > 0){
@@ -116,14 +118,17 @@ void draw(){
     } else {
       cells[xCellOver][yCellOver].kill();
     }
-  } else if(!mousePressed){
+  } else if(!mousePressed && mouseX < halfwayLineX && mouseX > 0){
     // On mouse release, update arrays to match again
       for(int i = 0; i < cellsPerRow; i++){
         for(int j = 0; j < cellsPerColumn; j++){
           cellsBuffer[i][j].copyCell(cells[i][j]);
         }
-      }    
+      }
+      countNeighbors(); // Count and mark the cells with the most neighbors
   }
+  
+
   
   // Iteration timer
   if((millis() - lastRecordedTime > timeBetweenIterations) && ( currentNumberOfIterations < totalNumberOfIterations|| iteratingForever)){
@@ -149,14 +154,46 @@ void draw(){
 
 // One iteration of the game of life
 void gameOfLife(){
+  countNeighbors();
   // Double check that arrays match up
     for(int i = 0; i < cellsPerRow; i++){
       for(int j = 0; j < cellsPerColumn; j++){
         cellsBuffer[i][j].copyCell(cells[i][j]);
       }
     }
-    
     // Visit each cell
+    for(int cellX = 0; cellX < cellsPerRow; cellX++){
+      for(int cellY = 0; cellY < cellsPerColumn; cellY++){
+        int neighbors = cellsBuffer[cellX][cellY].getNumberOfNeighbors();
+        // After checking neighbors, apply rules
+        // If the cell is alive
+        if(cellsBuffer[cellX][cellY].isAlive()){
+          // If has less than 2 neighbors, or more than 3, kill it
+          if(neighbors < 2 || neighbors > 3){
+            cells[cellX][cellY].kill();
+          } 
+        }else{ // Else, the cell is dead
+          //If it has 3 neighbors, bring it to life
+          if(neighbors == 3){
+            cells[cellX][cellY].revive();
+          }
+        }
+        cells[cellX][cellY].setNumberOfNeighbors(neighbors);
+      } // End of cellY traversal
+    } // End of cellX traversal    
+}
+
+
+// Counts the neighbors of each cell, then marks the cells with the most neighbors in each column
+void countNeighbors(){
+    // Double check that arrays match up
+    for(int i = 0; i < cellsPerRow; i++){
+      for(int j = 0; j < cellsPerColumn; j++){
+        cellsBuffer[i][j].copyCell(cells[i][j]);
+      }
+    }
+    
+   // Visit each cell
     for(int cellX = 0; cellX < cellsPerRow; cellX++){
       for(int cellY = 0; cellY < cellsPerColumn; cellY++){
         // And visit all of the neighbors of each cell
@@ -175,24 +212,31 @@ void gameOfLife(){
             } // End of if(checking to make sure in bounds)
           } // End of neighborY traversal
         } // End of neighborX traversal
-        
-        // After checking neighbors, apply rules
-        // If the cell is alive
-        if(cellsBuffer[cellX][cellY].isAlive()){
-          // If has less than 2 neighbors, or more than 3, kill it
-          if(neighbors < 2 || neighbors > 3){
-            cells[cellX][cellY].kill();
-          } 
-        }else{ // Else, the cell is dead
-          //If it has 3 neighbors, bring it to life
-          if(neighbors == 3){
-            cells[cellX][cellY].revive();
-          }
-        }
         cells[cellX][cellY].setNumberOfNeighbors(neighbors);
+        cellsBuffer[cellX][cellY].setNumberOfNeighbors(neighbors);
       } // End of cellY traversal
     } // End of cellX traversal    
-    //countingNeighborVotes = true;
+  
+  for(int i = 0; i < cellsPerRow; i++){
+    int maximumNeighbors = 0; // The highest number of neighbors in each column
+    int currentCellsNeighbors = 0; // The current cells neighbor count
+    for(int j = 0; j < cellsPerColumn; j++){
+      currentCellsNeighbors = cells[i][j].getNumberOfNeighbors();
+      if(currentCellsNeighbors >= maximumNeighbors){
+        maximumNeighbors = currentCellsNeighbors;
+      }
+    }
+    // Marks the cells that have the most neighbors
+    lookingForCellWithMostNeighbors = true; // Will be set to false upon first cell in column being marked
+    for(int j = 0; j < cellsPerColumn; j++){
+      if(cells[i][j].getNumberOfNeighbors() == maximumNeighbors && lookingForCellWithMostNeighbors){
+        cells[i][j].hasMostNeighbors(true);  // If has most neighbors
+        lookingForCellWithMostNeighbors = false;
+      } else {
+        cells[i][j].hasMostNeighbors(false); // If doesn't have most neighbors
+      }
+    }
+  }
 }
 
 
@@ -210,34 +254,22 @@ void generateRandomCells(){
 }
 
 
-// Clears the grid(sets all cells to be dead)
+// Clears the grid(sets all cells to be dead with no neighbors)
 void clearGrid(){
   for(int i = 0; i < cellsPerRow; i++){
     for(int j = 0; j < cellsPerColumn; j++){
       cells[i][j].kill(); // Set cell to be dead
     }
   }
+  clearNeighbors();
 }
 
-
-// Counts the neighbors of each cell, then marks the cells with the most neighbors in each column
-void countNeighbors(){
+// Removes all neighbor tracking from all cells
+void clearNeighbors(){
   for(int i = 0; i < cellsPerRow; i++){
-    int maximumNeighbors = 0; // The highest number of neighbors in each column
-    int currentCellsNeighbors = 0; // The current cells neighbor count
     for(int j = 0; j < cellsPerColumn; j++){
-      currentCellsNeighbors = cells[i][j].getNumberOfNeighbors();
-      if(currentCellsNeighbors >= maximumNeighbors){
-        maximumNeighbors = currentCellsNeighbors;
-      }
-    }
-    // Marks the cells that have the most neighbors
-    for(int j = 0; j < cellsPerColumn; j++){
-      if(cells[i][j].getNumberOfNeighbors() == maximumNeighbors){
-        cells[i][j].hasMostNeighbors(true);  // If has most neighbors
-      } else {
-        cells[i][j].hasMostNeighbors(false); // If doesn't have most neighbors
-      }
+      cells[i][j].setNumberOfNeighbors(0); // Set cell to have 0 registered neighbors
+      cells[i][j].hasMostNeighbors(false); // Set cell to not have the most neighbors in it's column
     }
   }
 }
@@ -245,12 +277,17 @@ void countNeighbors(){
 
 // Resizes the grid when the number of cells in the rows/columns are changed
 void resizeGrid(int newCellsPerRow, int newCellsPerColumn){
+  // Resetting grid
+  clearGrid();
+  currentNumberOfIterations = 0;
+  totalNumberOfIterations = 0;
   cellsPerRow = newCellsPerRow;
   cellsPerColumn = newCellsPerColumn;
+  // Resizing all of the displayed cells
   for(int i = 0; i < cellsPerRow; i++){
     for(int j = 0; j < cellsPerColumn; j++){
-      cellWidth = (width/2) / cellsPerRow;
-      cellHeight = height / cellsPerColumn;
+      cellWidth = (width/2) / (float)cellsPerRow;
+      cellHeight = height / (float)cellsPerColumn;
       cells[i][j].setWidth(cellWidth);
       cells[i][j].setHeight(cellHeight);
       cells[i][j].setCellX(cellWidth * i);
@@ -261,6 +298,7 @@ void resizeGrid(int newCellsPerRow, int newCellsPerColumn){
   
   cellsPerRow = newCellsPerRow;
   cellsPerColumn = newCellsPerColumn;
+  countNeighbors(); // Count and mark the cells with the most neighbors
 }
 
 
@@ -284,25 +322,55 @@ void setupControls(){
   
   // Adding to control groups
   // Control group 1
+  
   // RandomizeGridButton
   controlP5.addBang(controlP5, RandomizeGrid, RandomizeGrid, 0, 0, width/36, width/36).setGroup(controlGroup1)
                                                                                       .setFont(SmallerUIFont)
                                                                                       .getCaptionLabel()
                                                                                       .setColor(0);
-                                                                                      
+  // Clear Grid                                                                                                                   
+  controlP5.addBang(controlP5, ClearGrid, ClearGrid, width*3/36, 0, width/36, width/36).setGroup(controlGroup1)
+                                                                                       .setFont(SmallerUIFont)
+                                                                                       .getCaptionLabel()
+                                                                                       .setColor(0);     
+                                                                                       
+  // One iteration                                                                                                                  
+  controlP5.addBang(controlP5, OneIteration, OneIteration, 0, width*4/36, width/36, width/36).setGroup(controlGroup1)
+                                                                                         .setFont(SmallerUIFont)
+                                                                                         .getCaptionLabel()
+                                                                                         .setColor(0);   
+                                                                                         
+  // Multiple iterations                                                                                                                 
+  controlP5.addBang(controlP5, MultipleIterations, MultipleIterations, width*4/36, width*4/36, width/36, width/36).setGroup(controlGroup1)
+                                                                                         .setFont(SmallerUIFont)
+                                                                                         .getCaptionLabel()
+                                                                                         .setColor(0);        
+                                                                                         
+  // Iterate forever toggle    
+  controlP5.addToggle(controlP5, InfiniteIterations, InfiniteIterations, false, width*9/36, width*4/36, width/36, width/36).setGroup(controlGroup1)
+                                                                                                                           .setColorForeground(hoveredToggleColor)
+                                                                                                                           .setColorBackground(inactiveToggleColor)
+                                                                                                                           .setColorActive(activeToggleColor)
+                                                                                                                           .setFont(SmallerUIFont)
+                                                                                                                           .getCaptionLabel()
+                                                                                                                           .setColor(0);   
+                                                                                                                           
+  // Counting Neighbors Toggle 
+  controlP5.addToggle(controlP5, ShowingNeighbors, ShowingNeighbors, false, 0, width*2/36, width/36, width/36).setGroup(controlGroup1)
+                                                                                                                           .setColorForeground(hoveredToggleColor)
+                                                                                                                           .setColorBackground(inactiveToggleColor)
+                                                                                                                           .setColorActive(activeToggleColor)
+                                                                                                                           .setFont(SmallerUIFont)
+                                                                                                                           .getCaptionLabel()
+                                                                                                                           .setColor(0);   
+                                                                                                                           
   // % Chance of Being Alive Slider
   controlP5.addSlider(ChanceOfCellsBeingAlive, 1, 100, probabilityOfCellsBeingAlive, 0, width*6/36 , width/10, height/36).setGroup(controlGroup1)
                                                                                                                          .setFont(SmallerUIFont)
                                                                                                                          .setNumberOfTickMarks(100)
                                                                                                                          .showTickMarks(false)
                                                                                                                          .getCaptionLabel()
-                                                                                                                         .setColor(0);
-                                                                                                                         
-  // Clear Grid                                                                                                                   
-  controlP5.addBang(controlP5, ClearGrid, ClearGrid, width*3/36, 0, width/36, width/36).setGroup(controlGroup1)
-                                                                                       .setFont(SmallerUIFont)
-                                                                                       .getCaptionLabel()
-                                                                                       .setColor(0);        
+                                                                                                                         .setColor(0);                                                                                                                              
                                                                                                                                       
   // Number of iterations slider
   controlP5.addSlider(TotalIterations, 1, 100, 1, 0, width*7/36 , width/10, height/36).setGroup(controlGroup1)
@@ -335,23 +403,7 @@ void setupControls(){
                                                                                             .showTickMarks(false)
                                                                                             .getCaptionLabel()
                                                                                             .setColor(0);                                                                                       
-  // One iteration                                                                                                                  
-  controlP5.addBang(controlP5, OneIteration, OneIteration, 0, width*3/36, width/36, width/36).setGroup(controlGroup1)
-                                                                                         .setFont(SmallerUIFont)
-                                                                                         .getCaptionLabel()
-                                                                                         .setColor(0);   
-                                                                                         
-  // Multiple iterations                                                                                                                 
-  controlP5.addBang(controlP5, MultipleIterations, MultipleIterations, width*4/36, width*3/36, width/36, width/36).setGroup(controlGroup1)
-                                                                                         .setFont(SmallerUIFont)
-                                                                                         .getCaptionLabel()
-                                                                                         .setColor(0);        
-                                                                                         
-  // Iterate forever toggle                                                                                                        
-  controlP5.addBang(controlP5, InfiniteIterations, InfiniteIterations, width*9/36, width*3/36, width/36, width/36).setGroup(controlGroup1)
-                                                                                      .setFont(SmallerUIFont)
-                                                                                      .getCaptionLabel()
-                                                                                      .setColor(0);                                                                                         
+                                                                                       
                                                                                       
 }
 
@@ -362,8 +414,10 @@ void controlEvent(ControlEvent theEvent){
   
     if(theEvent.getController().getName() == RandomizeGrid){ // Randomizing Grid
       generateRandomCells();
+      countNeighbors();
       currentNumberOfIterations = 0;
       totalNumberOfIterations = 0;
+      countNeighbors(); // Count and mark the cells with the most neighbors
     }
     else if(theEvent.getController().getName() == ChanceOfCellsBeingAlive){ // Changing % of cells that are likely to be alive
       probabilityOfCellsBeingAlive = (int)controlP5.getController(ChanceOfCellsBeingAlive).getValue();
@@ -373,7 +427,7 @@ void controlEvent(ControlEvent theEvent){
       totalNumberOfIterations = 0;
       clearGrid();
       iteratingForever = false;
-      
+      countNeighbors(); // Count and mark the cells with the most neighbors
     }
     else if(theEvent.getController().getName() == OneIteration){ // Single iteration
       currentNumberOfIterations = 1;
@@ -393,6 +447,9 @@ void controlEvent(ControlEvent theEvent){
     }    
     else if(theEvent.getController().getName() == InfiniteIterations){ // Iterate Forever
        iteratingForever = !iteratingForever;
+    }
+    else if(theEvent.getController().getName() == ShowingNeighbors){ // Count Neighbors
+       showingNeighborVotes = !showingNeighborVotes;
     }
     else if(theEvent.getController().getName() == CellsPerRowController){ // Adjusts number of cells per row
       resizeGrid((int)controlP5.getController(CellsPerRowController).getValue(), cellsPerColumn);

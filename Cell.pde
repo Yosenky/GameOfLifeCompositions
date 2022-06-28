@@ -142,7 +142,7 @@ public class Cell{
   }
   
   void setCellColor(){
-    if(hasMaximumNeighbors){
+    if(hasMaximumNeighbors && showingNeighborVotes){
       fill(maximumNeighborsColor);
     }else if(isCellAlive){
       fill(aliveColor);
