@@ -1,3 +1,10 @@
+import ddf.minim.*;
+import ddf.minim.analysis.*;
+import ddf.minim.effects.*;
+import ddf.minim.signals.*;
+import ddf.minim.spi.*;
+import ddf.minim.ugens.*;
+
 import controlP5.*;
 
 /*
@@ -40,6 +47,7 @@ int lastRecordedTime = 0;
 boolean iteratingForever = false; // If true, iterates until manually stopped
 boolean showingNeighborVotes = false; // If true, highlights each cell with the most neighbors
 boolean lookingForCellWithMostNeighbors = true; // If true, search for first cell with most neighbors
+boolean allowMoreThanOneWinnerPerColumn = false; // If true, allows more than one cell per column to be marked with the most neighbors
 
 //
 // CONTROL P5 VARIABLES
@@ -56,6 +64,8 @@ String InfiniteIterations = "Infinite iterations";
 String CellsPerRowController = "Cells Per Row";
 String CellsPerColumnController = "Cells Per Column";
 String ShowingNeighbors = "Show cells with most neighbors";
+String AllowMoreThanOneWinner = "Allow more than one winner per column";
+String StopIterating = "Stop iterating";
 
 color activeToggleColor = color(14,220,55); // Color when toggle is active
 color inactiveToggleColor = color(0,0,0); // Color when toggle is inactive
@@ -231,7 +241,10 @@ void countNeighbors(){
     for(int j = 0; j < cellsPerColumn; j++){
       if(cells[i][j].getNumberOfNeighbors() == maximumNeighbors && lookingForCellWithMostNeighbors){
         cells[i][j].hasMostNeighbors(true);  // If has most neighbors
-        lookingForCellWithMostNeighbors = false;
+        if(!allowMoreThanOneWinnerPerColumn){
+          lookingForCellWithMostNeighbors = false; 
+        }
+
       } else {
         cells[i][j].hasMostNeighbors(false); // If doesn't have most neighbors
       }
@@ -354,6 +367,14 @@ void setupControls(){
                                                                                                                            .setFont(SmallerUIFont)
                                                                                                                            .getCaptionLabel()
                                                                                                                            .setColor(0);   
+  // Allow more than one winner per column toggle   
+  controlP5.addToggle(controlP5, AllowMoreThanOneWinner, AllowMoreThanOneWinner, false, width*8/36, width*2/36, width/36, width/36).setGroup(controlGroup1)
+                                                                                                                           .setColorForeground(hoveredToggleColor)
+                                                                                                                           .setColorBackground(inactiveToggleColor)
+                                                                                                                           .setColorActive(activeToggleColor)
+                                                                                                                           .setFont(SmallerUIFont)
+                                                                                                                           .getCaptionLabel()
+                                                                                                                           .setColor(0); 
                                                                                                                            
   // Counting Neighbors Toggle 
   controlP5.addToggle(controlP5, ShowingNeighbors, ShowingNeighbors, false, 0, width*2/36, width/36, width/36).setGroup(controlGroup1)
@@ -451,6 +472,10 @@ void controlEvent(ControlEvent theEvent){
     else if(theEvent.getController().getName() == ShowingNeighbors){ // Count Neighbors
        showingNeighborVotes = !showingNeighborVotes;
     }
+    else if(theEvent.getController().getName() == AllowMoreThanOneWinner){ // Allow more than one winner per column
+       allowMoreThanOneWinnerPerColumn = !allowMoreThanOneWinnerPerColumn;
+       countNeighbors(); //
+    }    
     else if(theEvent.getController().getName() == CellsPerRowController){ // Adjusts number of cells per row
       resizeGrid((int)controlP5.getController(CellsPerRowController).getValue(), cellsPerColumn);
     }   
