@@ -359,6 +359,11 @@ void setupControls(){
                                                                                          .getCaptionLabel()
                                                                                          .setColor(0);        
                                                                                          
+  // Stop Iterating                                                                                                                
+  controlP5.addBang(controlP5, StopIterating, StopIterating, width*6/36, 0, width/36, width/36).setGroup(controlGroup1)
+                                                                                                         .setFont(SmallerUIFont)
+                                                                                                         .getCaptionLabel()
+                                                                                                         .setColor(0);                                                                                            
   // Iterate forever toggle    
   controlP5.addToggle(controlP5, InfiniteIterations, InfiniteIterations, false, width*9/36, width*4/36, width/36, width/36).setGroup(controlGroup1)
                                                                                                                            .setColorForeground(hoveredToggleColor)
@@ -469,6 +474,9 @@ void controlEvent(ControlEvent theEvent){
     else if(theEvent.getController().getName() == InfiniteIterations){ // Iterate Forever
        iteratingForever = !iteratingForever;
     }
+    else if(theEvent.getController().getName() == StopIterating){ // Stop Iterating
+       totalNumberOfIterations = currentNumberOfIterations;
+    }    
     else if(theEvent.getController().getName() == ShowingNeighbors){ // Count Neighbors
        showingNeighborVotes = !showingNeighborVotes;
     }
