@@ -73,6 +73,11 @@ public class Cell{
     return numberOfNeighbors;
   }
   
+  // Returns true if has max number of neighbors
+  boolean getHasMaximumNeighbors(){
+    return hasMaximumNeighbors;
+  }
+  
   
   //
   // SETTER METHODS

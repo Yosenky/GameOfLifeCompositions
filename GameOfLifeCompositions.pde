@@ -54,27 +54,54 @@ boolean allowMoreThanOneWinnerPerColumn = false; // If true, allows more than on
 //
 ControlP5 controlP5;
 String RandomizeGrid = "Randomize";
-String ChanceOfCellsBeingAlive = "Chance of cells being alive(%)";
+String ChanceOfCellsBeingAlive = "Chance of life(%)";
 String ClearGrid = "Clear";
-String OneIteration = "One iteration";
-String MultipleIterations = "Multiple iterations";
+String OneIteration = "One";
+String MultipleIterations = "Multiple";
 String TotalIterations = "Number of iterations to queue";
 String TimeBetweenIterations = "Time between iterations(seconds)";
-String InfiniteIterations = "Infinite iterations";
+String InfiniteIterations = "Infinite";
 String CellsPerRowController = "Cells Per Row";
 String CellsPerColumnController = "Cells Per Column";
-String ShowingNeighbors = "Show cells with most neighbors";
+String ShowingNeighbors = "Show Most Neighbors";
 String AllowMoreThanOneWinner = "Allow more than one winner per column";
-String StopIterating = "Stop iterating";
+String StopIterating = "Stop";
+String PlayNotes = "Play Notes";
 
 color activeToggleColor = color(14,220,55); // Color when toggle is active
 color inactiveToggleColor = color(0,0,0); // Color when toggle is inactive
 color hoveredToggleColor = color(80,80,80); // Color when toggle is being hovered over
 
+PFont BarFont; // Font for bars at top of control groups
+PFont UIFont; // Regular UI Font
+PFont SmallerUIFont; // Smaller version of UI Font
+
+ControlGroup gridControls;
+ControlGroup gameOfLifeControls;
+ControlGroup audioControls;
+ControlGroup votingControls;
+
+//
+// AUDIO VARIABLES
+//
+Minim minim;
+AudioOutput out;
+
+float noteDuration = .25; // Duration of each note, in beats
+
+//
+// OBJECT VARIABLES
+//
+GridController gridController; // Contains methods for manipulating the grid of cells
+ControlsController controlsController; // Contains methods for generation of controls and handling of events
 
 void setup(){
   //fullScreen();
   size(1800,1000);
+  
+  // OBJECT INITIALIZATION
+  gridController = new GridController();
+  controlsController = new ControlsController();
   
   //
   // GRID STUFF
@@ -98,7 +125,15 @@ void setup(){
   // CONTROL P5 STUFF
   //
   controlP5 = new ControlP5(this);
-  setupControls();
+  controlsController.setupControls();
+  
+  //
+  // MINIM STUFF
+  //
+  minim = new Minim(this);
+  out = minim.getLineOut();
+  
+
 }
 
 
@@ -128,7 +163,7 @@ void draw(){
     } else {
       cells[xCellOver][yCellOver].kill();
     }
-  } else if(!mousePressed && mouseX < halfwayLineX && mouseX > 0){
+  } else if(!mousePressed){
     // On mouse release, update arrays to match again
       for(int i = 0; i < cellsPerRow; i++){
         for(int j = 0; j < cellsPerColumn; j++){
@@ -252,243 +287,30 @@ void countNeighbors(){
   }
 }
 
-
-// Sets random cells to be alive in the grid
-void generateRandomCells(){
-  for(int i = 0; i < cellsPerRow; i++){
+// Saves notes to an audio track
+void saveNotes(){
+  out.pauseNotes();
+  float noteTime = 0;
+  for(int i  = 0; i < cellsPerRow; i++){
     for(int j = 0; j < cellsPerColumn; j++){
-      cells[i][j].kill(); // Initialize entire array to be dead at start
-      float isAlive = random(100);
-      if(isAlive < probabilityOfCellsBeingAlive){
-        cells[i][j].revive();
+      if(cells[i][j].getHasMaximumNeighbors()){
+        out.playNote( noteTime, noteDuration, new SineInstrument( 300 + 20*j) );
+        noteTime += noteDuration;
       }
     }
-  }
+  }  
+}
+
+// Plays notes based on neighbors
+void playNotes(){
+  out.resumeNotes();
 }
 
 
-// Clears the grid(sets all cells to be dead with no neighbors)
-void clearGrid(){
-  for(int i = 0; i < cellsPerRow; i++){
-    for(int j = 0; j < cellsPerColumn; j++){
-      cells[i][j].kill(); // Set cell to be dead
-    }
-  }
-  clearNeighbors();
-}
 
-// Removes all neighbor tracking from all cells
-void clearNeighbors(){
-  for(int i = 0; i < cellsPerRow; i++){
-    for(int j = 0; j < cellsPerColumn; j++){
-      cells[i][j].setNumberOfNeighbors(0); // Set cell to have 0 registered neighbors
-      cells[i][j].hasMostNeighbors(false); // Set cell to not have the most neighbors in it's column
-    }
-  }
-}
-
-
-// Resizes the grid when the number of cells in the rows/columns are changed
-void resizeGrid(int newCellsPerRow, int newCellsPerColumn){
-  // Resetting grid
-  clearGrid();
-  currentNumberOfIterations = 0;
-  totalNumberOfIterations = 0;
-  cellsPerRow = newCellsPerRow;
-  cellsPerColumn = newCellsPerColumn;
-  // Resizing all of the displayed cells
-  for(int i = 0; i < cellsPerRow; i++){
-    for(int j = 0; j < cellsPerColumn; j++){
-      cellWidth = (width/2) / (float)cellsPerRow;
-      cellHeight = height / (float)cellsPerColumn;
-      cells[i][j].setWidth(cellWidth);
-      cells[i][j].setHeight(cellHeight);
-      cells[i][j].setCellX(cellWidth * i);
-      cells[i][j].setCellY(cellHeight * j);
-      cellsBuffer[i][j].copyCell(cells[i][j]);
-    }
-  }
-  
-  cellsPerRow = newCellsPerRow;
-  cellsPerColumn = newCellsPerColumn;
-  countNeighbors(); // Count and mark the cells with the most neighbors
-}
-
-
-//
-// ALL CONTROLP5 STUFF UNDER HERE
-//
-
-
-
-void setupControls(){
-  PFont BarFont       = createFont("unispaceregular.ttf",width/96);
-  PFont UIFont        = createFont("Candal.ttf",24);
-  PFont SmallerUIFont = createFont("MonospaceTypewriter.ttf", 18);
-  controlP5.setFont(BarFont);
-  
-  // Creating control groups
-  ControlGroup controlGroup1 = controlP5.addGroup("Grid Controls", halfwayLineX + 15, height/30);
-  controlGroup1.setBackgroundHeight((height*34/40)/2);
-  controlGroup1.setWidth(width/6);
-  controlGroup1.setBarHeight(height/40);
-  
-  // Adding to control groups
-  // Control group 1
-  
-  // RandomizeGridButton
-  controlP5.addBang(controlP5, RandomizeGrid, RandomizeGrid, 0, 0, width/36, width/36).setGroup(controlGroup1)
-                                                                                      .setFont(SmallerUIFont)
-                                                                                      .getCaptionLabel()
-                                                                                      .setColor(0);
-  // Clear Grid                                                                                                                   
-  controlP5.addBang(controlP5, ClearGrid, ClearGrid, width*3/36, 0, width/36, width/36).setGroup(controlGroup1)
-                                                                                       .setFont(SmallerUIFont)
-                                                                                       .getCaptionLabel()
-                                                                                       .setColor(0);     
-                                                                                       
-  // One iteration                                                                                                                  
-  controlP5.addBang(controlP5, OneIteration, OneIteration, 0, width*4/36, width/36, width/36).setGroup(controlGroup1)
-                                                                                         .setFont(SmallerUIFont)
-                                                                                         .getCaptionLabel()
-                                                                                         .setColor(0);   
-                                                                                         
-  // Multiple iterations                                                                                                                 
-  controlP5.addBang(controlP5, MultipleIterations, MultipleIterations, width*4/36, width*4/36, width/36, width/36).setGroup(controlGroup1)
-                                                                                         .setFont(SmallerUIFont)
-                                                                                         .getCaptionLabel()
-                                                                                         .setColor(0);        
-                                                                                         
-  // Stop Iterating                                                                                                                
-  controlP5.addBang(controlP5, StopIterating, StopIterating, width*6/36, 0, width/36, width/36).setGroup(controlGroup1)
-                                                                                                         .setFont(SmallerUIFont)
-                                                                                                         .getCaptionLabel()
-                                                                                                         .setColor(0);                                                                                            
-  // Iterate forever toggle    
-  controlP5.addToggle(controlP5, InfiniteIterations, InfiniteIterations, false, width*9/36, width*4/36, width/36, width/36).setGroup(controlGroup1)
-                                                                                                                           .setColorForeground(hoveredToggleColor)
-                                                                                                                           .setColorBackground(inactiveToggleColor)
-                                                                                                                           .setColorActive(activeToggleColor)
-                                                                                                                           .setFont(SmallerUIFont)
-                                                                                                                           .getCaptionLabel()
-                                                                                                                           .setColor(0);   
-  // Allow more than one winner per column toggle   
-  controlP5.addToggle(controlP5, AllowMoreThanOneWinner, AllowMoreThanOneWinner, false, width*8/36, width*2/36, width/36, width/36).setGroup(controlGroup1)
-                                                                                                                           .setColorForeground(hoveredToggleColor)
-                                                                                                                           .setColorBackground(inactiveToggleColor)
-                                                                                                                           .setColorActive(activeToggleColor)
-                                                                                                                           .setFont(SmallerUIFont)
-                                                                                                                           .getCaptionLabel()
-                                                                                                                           .setColor(0); 
-                                                                                                                           
-  // Counting Neighbors Toggle 
-  controlP5.addToggle(controlP5, ShowingNeighbors, ShowingNeighbors, false, 0, width*2/36, width/36, width/36).setGroup(controlGroup1)
-                                                                                                                           .setColorForeground(hoveredToggleColor)
-                                                                                                                           .setColorBackground(inactiveToggleColor)
-                                                                                                                           .setColorActive(activeToggleColor)
-                                                                                                                           .setFont(SmallerUIFont)
-                                                                                                                           .getCaptionLabel()
-                                                                                                                           .setColor(0);   
-                                                                                                                           
-  // % Chance of Being Alive Slider
-  controlP5.addSlider(ChanceOfCellsBeingAlive, 1, 100, probabilityOfCellsBeingAlive, 0, width*6/36 , width/10, height/36).setGroup(controlGroup1)
-                                                                                                                         .setFont(SmallerUIFont)
-                                                                                                                         .setNumberOfTickMarks(100)
-                                                                                                                         .showTickMarks(false)
-                                                                                                                         .getCaptionLabel()
-                                                                                                                         .setColor(0);                                                                                                                              
-                                                                                                                                      
-  // Number of iterations slider
-  controlP5.addSlider(TotalIterations, 1, 100, 1, 0, width*7/36 , width/10, height/36).setGroup(controlGroup1)
-                                                                                      .setFont(SmallerUIFont)
-                                                                                      .setNumberOfTickMarks(100)
-                                                                                      .showTickMarks(false)
-                                                                                      .getCaptionLabel()
-                                                                                      .setColor(0);  
-                                                                                      
-  // Time between iterations slider
-  controlP5.addSlider(TimeBetweenIterations, .01, 5, 1, 0, width*8/36 , width/10, height/36).setGroup(controlGroup1)
-                                                                                            .setFont(SmallerUIFont)
-                                                                                            .setNumberOfTickMarks(500)
-                                                                                            .showTickMarks(false)
-                                                                                            .getCaptionLabel()
-                                                                                            .setColor(0);
-                                                                                            
-  // Cells Per Row Slider
-  controlP5.addSlider(CellsPerRowController, 10, 150, 10, 0, width*9/36 , width/10, height/36).setGroup(controlGroup1)
-                                                                                            .setFont(SmallerUIFont)
-                                                                                            .setNumberOfTickMarks(maxCellsPerRow-9)
-                                                                                            .showTickMarks(false)
-                                                                                            .getCaptionLabel()
-                                                                                            .setColor(0);
-                                                                                            
-  // Cells Per Column Slider
-  controlP5.addSlider(CellsPerColumnController, 10, 150, 10, 0, width*10/36 , width/10, height/36).setGroup(controlGroup1)
-                                                                                            .setFont(SmallerUIFont)
-                                                                                            .setNumberOfTickMarks(maxCellsPerColumn-9)
-                                                                                            .showTickMarks(false)
-                                                                                            .getCaptionLabel()
-                                                                                            .setColor(0);                                                                                       
-                                                                                       
-                                                                                      
-}
 
 
 // Event handler for all getControllers
 void controlEvent(ControlEvent theEvent){
-  if(theEvent.isController()){ // Checking to make sure the ControlEvent corresponds to a controller
-  
-    if(theEvent.getController().getName() == RandomizeGrid){ // Randomizing Grid
-      generateRandomCells();
-      countNeighbors();
-      currentNumberOfIterations = 0;
-      totalNumberOfIterations = 0;
-      countNeighbors(); // Count and mark the cells with the most neighbors
-    }
-    else if(theEvent.getController().getName() == ChanceOfCellsBeingAlive){ // Changing % of cells that are likely to be alive
-      probabilityOfCellsBeingAlive = (int)controlP5.getController(ChanceOfCellsBeingAlive).getValue();
-    }
-    else if(theEvent.getController().getName() == ClearGrid){ // Clear Grid
-      currentNumberOfIterations = 0;
-      totalNumberOfIterations = 0;
-      clearGrid();
-      iteratingForever = false;
-      countNeighbors(); // Count and mark the cells with the most neighbors
-    }
-    else if(theEvent.getController().getName() == OneIteration){ // Single iteration
-      currentNumberOfIterations = 1;
-      totalNumberOfIterations = 1;
-      gameOfLife();
-      lastRecordedTime = millis();
-    }
-    else if(theEvent.getController().getName() == MultipleIterations){ // Multiple Iterations
-      currentNumberOfIterations = 0;
-      currentNumberOfIterations++;
-      gameOfLife();
-      totalNumberOfIterations = (int)controlP5.getController(TotalIterations).getValue();
-      lastRecordedTime = millis();    
-    }
-    else if(theEvent.getController().getName() == TimeBetweenIterations){ // Time between iterations
-      timeBetweenIterations = controlP5.getController(TimeBetweenIterations).getValue() * 1000;
-    }    
-    else if(theEvent.getController().getName() == InfiniteIterations){ // Iterate Forever
-       iteratingForever = !iteratingForever;
-    }
-    else if(theEvent.getController().getName() == StopIterating){ // Stop Iterating
-       totalNumberOfIterations = currentNumberOfIterations;
-    }    
-    else if(theEvent.getController().getName() == ShowingNeighbors){ // Count Neighbors
-       showingNeighborVotes = !showingNeighborVotes;
-    }
-    else if(theEvent.getController().getName() == AllowMoreThanOneWinner){ // Allow more than one winner per column
-       allowMoreThanOneWinnerPerColumn = !allowMoreThanOneWinnerPerColumn;
-       countNeighbors(); //
-    }    
-    else if(theEvent.getController().getName() == CellsPerRowController){ // Adjusts number of cells per row
-      resizeGrid((int)controlP5.getController(CellsPerRowController).getValue(), cellsPerColumn);
-    }   
-    else if(theEvent.getController().getName() == CellsPerColumnController){ // Adjusts number of cells per column
-      resizeGrid(cellsPerRow, (int)controlP5.getController(CellsPerColumnController).getValue());
-    }   
-  }
+  controlsController.newControlEvent(theEvent);
 }
