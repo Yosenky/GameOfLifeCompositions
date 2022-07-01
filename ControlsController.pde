@@ -1,7 +1,62 @@
+// Controls Controller Class
 // Object for use controlling the controlP5 objects and events
 // Contains methods for creating and using controlP5 controls
 
+//
+// CONTROL P5 VARIABLES
+//
+ControlP5 controlP5;
+
+
+//
+// STRINGS FOR CONTROLLER NAMES
+//
+
+// Grid Controls
+String RandomizeGrid = "Randomize";
+String ChanceOfCellsBeingAlive = "Chance of life(%)";
+String ClearGrid = "Clear";
+String CellsPerRow = "Cells Per Row";
+String CellsPerColumn = "Cells Per Column";
+
+// Game of Life Controls
+String OneIteration = "One";
+String MultipleIterations = "Multiple";
+String TotalIterations = "Iterations to queue";
+String IterationLength = "Iteration length(s)";
+String InfiniteIterations = "Infinite";
+String StopIterating = "Stop";
+String IterationsText = "Current Iteration: ";
+
+// Audio Controls
+String PlayNotes = "Play Notes";
+String NoteDuration = "Note Duration(s)";
 String AddToTrack = "Save to track";
+
+// Voting Controls
+String ShowingNeighbors = "Show Most Neighbors";
+String AllowMoreThanOneWinner = "Allow more than one winner per column";
+
+// Communication Controls
+String ReceivingMessages = "Receive Messages";
+
+// Colors
+color activeToggleColor = color(14,220,55); // Color when toggle is active
+color inactiveToggleColor = color(0,0,0); // Color when toggle is inactive
+color hoveredToggleColor = color(80,80,80); // Color when toggle is being hovered over
+
+// UI Fonts
+PFont BarFont; // Font for bars at top of control groups
+PFont UIFont; // Regular UI Font
+PFont SmallerUIFont; // Smaller version of UI Font
+
+// Control Groups
+ControlGroup gridControls;
+ControlGroup gameOfLifeControls;
+ControlGroup audioControls;
+ControlGroup votingControls;
+ControlGroup communicationControls;
+
 
 public class ControlsController{
   
@@ -15,7 +70,8 @@ public class ControlsController{
     createGridControls();
     createGameOfLifeControls();
     createAudioControls();
-    createVotingControls();                                                                                        
+    createVotingControls(); 
+    createCommunicationControls();
   }
   
   
@@ -52,7 +108,13 @@ public class ControlsController{
     votingControls = controlP5.addGroup("Voting Controls", halfwayLineX * 3/2, height*2/30);
     votingControls.setBackgroundHeight((height*34/40)/2);
     votingControls.setWidth(width/6);
-    votingControls.setBarHeight(height/40);   
+    votingControls.setBarHeight(height/40); 
+    
+    // Communication Controls
+    communicationControls = controlP5.addGroup("Communication Controls", halfwayLineX * 3/2, height*10/30);
+    communicationControls.setBackgroundHeight((height*34/40)/2);
+    communicationControls.setWidth(width/6);
+    communicationControls.setBarHeight(height/40);   
   }
   
   //
@@ -60,37 +122,71 @@ public class ControlsController{
   //
   void createGridControls(){
     // RandomizeGridButton
-    controlP5.addBang(controlP5, RandomizeGrid, RandomizeGrid, 0, 0, width/36, width/36).setGroup(gridControls)
-                                                                                      .setFont(SmallerUIFont)
-                                                                                      .getCaptionLabel()
-                                                                                      .setColor(0);
+    controlP5.addBang(RandomizeGrid)
+             .setBroadcast(false) // Prevents controller from sending events when program starts
+             .setPosition(0,0)
+             .setSize(width/36,width/36)
+             .setGroup(gridControls)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);
+             
     // Clear Grid                                                                                                                   
-    controlP5.addBang(controlP5, ClearGrid, ClearGrid, width*2/36, 0, width/36, width/36).setGroup(gridControls)
-                                                                                       .setFont(SmallerUIFont)
-                                                                                       .getCaptionLabel()
-                                                                                       .setColor(0);     
+    controlP5.addBang(ClearGrid)
+             .setBroadcast(false)
+             .setPosition(width*2/36, 0)
+             .setSize(width/36,width/36)
+             .setGroup(gridControls)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);  
+             
     // % Chance of Being Alive Slider
-    controlP5.addSlider(ChanceOfCellsBeingAlive, 1, 100, probabilityOfCellsBeingAlive, 0, width*2/36 , width/10, height/36).setGroup(gridControls)
-                                                                                                                           .setFont(SmallerUIFont)
-                                                                                                                           .setNumberOfTickMarks(100)
-                                                                                                                           .showTickMarks(false)
-                                                                                                                           .getCaptionLabel()
-                                                                                                                           .setColor(0);    
+    controlP5.addSlider(ChanceOfCellsBeingAlive)
+             .setBroadcast(false)
+             .setPosition(0,width*2/36)
+             .setSize(width/10, height/36)
+             .setRange(1,100)
+             .setValue(probabilityOfCellsBeingAlive)
+             .setGroup(gridControls)
+             .setFont(SmallerUIFont)
+             .setNumberOfTickMarks(100)
+             .showTickMarks(false)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);  
+             
     // Cells Per Row Slider
-    controlP5.addSlider(CellsPerRowController, 10, 150, 10, 0, width*3/36 , width/10, height/36).setGroup(gridControls)
-                                                                                              .setFont(SmallerUIFont)
-                                                                                              .setNumberOfTickMarks(maxCellsPerRow-9)
-                                                                                              .showTickMarks(false)
-                                                                                              .getCaptionLabel()
-                                                                                              .setColor(0); 
+    controlP5.addSlider(CellsPerRow)
+             .setBroadcast(false)
+             .setPosition( 0, width*3/36 )
+             .setSize(width/10, height/36)
+             .setRange(minCellsPerRow, maxCellsPerRow)
+             .setValue(cellsPerRow)
+             .setGroup(gridControls)
+             .setFont(SmallerUIFont)
+             .setNumberOfTickMarks((maxCellsPerRow-minCellsPerRow)+1)
+             .showTickMarks(false)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0); 
+             
     // Cells Per Column Slider
-    controlP5.addSlider(CellsPerColumnController, 10, 150, 10, 0, width*4/36 , width/10, height/36).setGroup(gridControls)
-                                                                                              .setFont(SmallerUIFont)
-                                                                                              .setNumberOfTickMarks(maxCellsPerColumn-9)
-                                                                                              .showTickMarks(false)
-                                                                                              .getCaptionLabel()
-                                                                                              .setColor(0); 
-                                                                                       
+    controlP5.addSlider(CellsPerColumn)
+             .setBroadcast(false)
+             .setPosition( 0, width*4/36 )
+             .setSize(width/10, height/36)
+             .setRange(minCellsPerRow, maxCellsPerRow)
+             .setValue(cellsPerColumn)
+             .setGroup(gridControls)
+             .setFont(SmallerUIFont)
+             .setNumberOfTickMarks((maxCellsPerRow-minCellsPerRow)+1)
+             .showTickMarks(false)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);                                                                                        
   }
   
   
@@ -99,52 +195,92 @@ public class ControlsController{
   //
   void createGameOfLifeControls(){
     // Add iteration text
-    controlP5.addTextlabel("Iterations Text", "Iterations:", 0, 0).setGroup(gameOfLifeControls)
-                                                                                           .setFont(SmallerUIFont)
-                                                                                           .setColor(0); ;
+    controlP5.addTextlabel(IterationsText)
+             .setBroadcast(false)
+             .setPosition(0,0)
+             .setValue(IterationsText)
+             .setGroup(gameOfLifeControls)
+             .setFont(SmallerUIFont)
+             .setColor(0)
+             .setBroadcast(true);
     
-    // One iteration                                                                                                                  
-    controlP5.addBang(controlP5, OneIteration, OneIteration, 0, width/72, width/36, width/36).setGroup(gameOfLifeControls)
-                                                                                           .setFont(SmallerUIFont)
-                                                                                           .getCaptionLabel()
-                                                                                           .setColor(0);   
+    // One iteration 
+    controlP5.addBang(OneIteration)
+             .setBroadcast(false)
+             .setPosition(0, width/72)
+             .setSize(width/36,width/36)
+             .setGroup(gameOfLifeControls)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);       
                                                                                            
-    // Multiple iterations                                                                                                                 
-    controlP5.addBang(controlP5, MultipleIterations, MultipleIterations, width*2/36, width/72, width/36, width/36).setGroup(gameOfLifeControls)
-                                                                                           .setFont(SmallerUIFont)
-                                                                                           .getCaptionLabel()
-                                                                                           .setColor(0);        
-                                                                                               
+    // Multiple iterations
+    controlP5.addBang(MultipleIterations)
+             .setBroadcast(false)
+             .setPosition(width*2/36, width/72)
+             .setSize(width/36,width/36)
+             .setGroup(gameOfLifeControls)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);           
+                                                                                        
     // Iterate forever toggle    
-    controlP5.addToggle(controlP5, InfiniteIterations, InfiniteIterations, false, width*4/36, width/72, width/36, width/36).setGroup(gameOfLifeControls)
-                                                                                                                             .setColorForeground(hoveredToggleColor)
-                                                                                                                             .setColorBackground(inactiveToggleColor)
-                                                                                                                             .setColorActive(activeToggleColor)
-                                                                                                                             .setFont(SmallerUIFont)
-                                                                                                                             .getCaptionLabel()
-                                                                                                                             .setColor(0);
+    controlP5.addToggle(InfiniteIterations)
+             .setBroadcast(false)
+             .setValue(false)
+             .setPosition(width*4/36,width/72)
+             .setSize(width/36,width/36)
+             .setGroup(gameOfLifeControls)
+             .setColorForeground(hoveredToggleColor)
+             .setColorBackground(inactiveToggleColor)
+             .setColorActive(activeToggleColor)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);
                                                                                                                              
-    // Stop Iterating                                                                                                                
-    controlP5.addBang(controlP5, StopIterating, StopIterating, width*6/36, width/72, width/36, width/36).setGroup(gameOfLifeControls)
-                                                                                                           .setFont(SmallerUIFont)
-                                                                                                           .getCaptionLabel()
-                                                                                                           .setColor(0);                                                                                                                              
+    // Stop Iterating  
+    controlP5.addBang(StopIterating)
+             .setBroadcast(false)
+             .setPosition(width*6/36, width/72)
+             .setSize(width/36,width/36)
+             .setGroup(gameOfLifeControls)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);   
+                                                                                                                              
     // Number of iterations slider
-    controlP5.addSlider(TotalIterations, 1, 100, 1, 0, width*5/72 , width/10, height*2/72).setGroup(gameOfLifeControls)
-                                                                                        .setFont(SmallerUIFont)
-                                                                                        .setNumberOfTickMarks(100)
-                                                                                        .showTickMarks(false)
-                                                                                        .getCaptionLabel()
-                                                                                        .setColor(0); 
+    controlP5.addSlider(TotalIterations)
+             .setBroadcast(false)
+             .setPosition(0, width*5/72)
+             .setSize(width/10, height*2/72)
+             .setRange(1,100)
+             .setValue(1)
+             .setGroup(gameOfLifeControls)
+             .setFont(SmallerUIFont)
+             .setNumberOfTickMarks(100)
+             .showTickMarks(false)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);
+
     // Time between iterations slider
-    controlP5.addSlider(TimeBetweenIterations, .01, 5, 1, 0, width*7/72 , width/10, height*2/72).setGroup(gameOfLifeControls)
-                                                                                              .setFont(SmallerUIFont)
-                                                                                              .setNumberOfTickMarks(500)
-                                                                                              .showTickMarks(false)
-                                                                                              .getCaptionLabel()
-                                                                                              .setColor(0);
-                                                                                              
-   
+    controlP5.addSlider(IterationLength)
+             .setBroadcast(false)
+             .setPosition(0, width*7/72)
+             .setSize(width/10, height*2/72)
+             .setRange(.01, 5)
+             .setValue(1)
+             .setGroup(gameOfLifeControls)
+             .setFont(SmallerUIFont)
+             .setNumberOfTickMarks(500)
+             .showTickMarks(false)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);                                                                                                   
   }
   
   
@@ -152,16 +288,42 @@ public class ControlsController{
   // Creates Audio Controls
   //
   void createAudioControls(){
-    // Play Notes                                                                                                                  
-    controlP5.addBang(controlP5, PlayNotes, PlayNotes, 0, 0, width/36, width/36).setGroup(audioControls)
-                                                                                       .setFont(SmallerUIFont)
-                                                                                       .getCaptionLabel()
-                                                                                       .setColor(0);  
+    // Play Notes
+    controlP5.addBang(PlayNotes)
+             .setBroadcast(false)
+             .setPosition(0,0)
+             .setSize(width/36,width/36)
+             .setGroup(audioControls)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);      
+ 
     // Save notes to track 1
-    controlP5.addBang(controlP5, AddToTrack, AddToTrack, 0, width*2/36, width/36, width/36).setGroup(audioControls)
-                                                                                       .setFont(SmallerUIFont)
-                                                                                       .getCaptionLabel()
-                                                                                       .setColor(0); 
+    controlP5.addBang(AddToTrack)
+             .setBroadcast(false)
+             .setPosition(0, width*2/36)
+             .setSize(width/36,width/36)
+             .setGroup(audioControls)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0); 
+             
+    // Note duration slider
+    controlP5.addSlider(NoteDuration)
+             .setBroadcast(false)
+             .setPosition(0, width*4/36)
+             .setSize(width/10, height/36)
+             .setRange(.05, 2)
+             .setValue(.25)
+             .setGroup(audioControls)
+             .setFont(SmallerUIFont)
+             .setNumberOfTickMarks(40)
+             .showTickMarks(false)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);                                                                                             
   }
   
   
@@ -170,22 +332,56 @@ public class ControlsController{
   //
   void createVotingControls(){
     // Counting Neighbors Toggle 
-    controlP5.addToggle(controlP5, ShowingNeighbors, ShowingNeighbors, false, 0,0, width/36, width/36).setGroup(votingControls)
-                                                                                                                             .setColorForeground(hoveredToggleColor)
-                                                                                                                             .setColorBackground(inactiveToggleColor)
-                                                                                                                             .setColorActive(activeToggleColor)
-                                                                                                                             .setFont(SmallerUIFont)
-                                                                                                                             .getCaptionLabel()
-                                                                                                                             .setColor(0); 
-    // Allow more than one winner per column toggle   
-    controlP5.addToggle(controlP5, AllowMoreThanOneWinner, AllowMoreThanOneWinner, false, 0, width*2/36, width/36, width/36).setGroup(votingControls)
-                                                                                                                             .setColorForeground(hoveredToggleColor)
-                                                                                                                             .setColorBackground(inactiveToggleColor)
-                                                                                                                             .setColorActive(activeToggleColor)
-                                                                                                                             .setFont(SmallerUIFont)
-                                                                                                                             .getCaptionLabel()
-                                                                                                                             .setColor(0);
-
+    controlP5.addToggle(ShowingNeighbors)
+             .setBroadcast(false)
+             .setValue(false)
+             .setPosition( 0,0)
+             .setSize(width/36,width/36)
+             .setGroup(votingControls)
+             .setColorForeground(hoveredToggleColor)
+             .setColorBackground(inactiveToggleColor)
+             .setColorActive(activeToggleColor)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);
+ 
+    // Allow more than one winner per column toggle
+    controlP5.addToggle(AllowMoreThanOneWinner)
+             .setBroadcast(false)
+             .setValue(false)
+             .setPosition(0, width*2/36)
+             .setSize(width/36,width/36)
+             .setGroup(votingControls)
+             .setColorForeground(hoveredToggleColor)
+             .setColorBackground(inactiveToggleColor)
+             .setColorActive(activeToggleColor)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0); 
+  }
+  
+  
+  //
+  // Create Communication Controls
+  //
+  void createCommunicationControls(){
+    // Receiving messages toggle
+    controlP5.addToggle(ReceivingMessages)
+             .setBroadcast(false)
+             .setValue(false)
+             .setPosition(0, 0)
+             .setSize(width/36,width/36)
+             .setGroup(communicationControls)
+             .setColorForeground(hoveredToggleColor)
+             .setColorBackground(inactiveToggleColor)
+             .setColorActive(activeToggleColor)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0); 
+                
   }
   
   
@@ -199,10 +395,10 @@ public class ControlsController{
       
       if(theEvent.getController().getName() == RandomizeGrid){ // Randomizing Grid
         gridController.generateRandomCells();
-        countNeighbors();
+        gameOfLifeController.countNeighbors();
         currentNumberOfIterations = 0;
         totalNumberOfIterations = 0;
-        countNeighbors(); // Count and mark the cells with the most neighbors
+        gameOfLifeController.countNeighbors(); // Count and mark the cells with the most neighbors
       }
       else if(theEvent.getController().getName() == ChanceOfCellsBeingAlive){ // Changing % of cells that are likely to be alive
         probabilityOfCellsBeingAlive = (int)controlP5.getController(ChanceOfCellsBeingAlive).getValue();
@@ -212,13 +408,13 @@ public class ControlsController{
         totalNumberOfIterations = 0;
         gridController.clearGrid();
         iteratingForever = false;
-        countNeighbors(); // Count and mark the cells with the most neighbors
+        gameOfLifeController.countNeighbors(); // Count and mark the cells with the most neighbors
       }
-      else if(theEvent.getController().getName() == CellsPerRowController){ // Adjusts number of cells per row
-        gridController.resizeGrid((int)controlP5.getController(CellsPerRowController).getValue(), cellsPerColumn);
+      else if(theEvent.getController().getName() == CellsPerRow){ // Adjusts number of cells per row
+        gridController.resizeGrid((int)controlP5.getController(CellsPerRow).getValue(), cellsPerColumn);
       }   
-      else if(theEvent.getController().getName() == CellsPerColumnController){ // Adjusts number of cells per column
-        gridController.resizeGrid(cellsPerRow, (int)controlP5.getController(CellsPerColumnController).getValue());
+      else if(theEvent.getController().getName() == CellsPerColumn){ // Adjusts number of cells per column
+        gridController.resizeGrid(cellsPerRow, (int)controlP5.getController(CellsPerColumn).getValue());
       }   
       
       //
@@ -228,24 +424,25 @@ public class ControlsController{
       else if(theEvent.getController().getName() == OneIteration){ // Single iteration
         currentNumberOfIterations = 1;
         totalNumberOfIterations = 1;
-        gameOfLife();
+        gameOfLifeController.gameOfLife();
         lastRecordedTime = millis();
       }
       else if(theEvent.getController().getName() == MultipleIterations){ // Multiple Iterations
         currentNumberOfIterations = 0;
         currentNumberOfIterations++;
-        gameOfLife();
+        gameOfLifeController.gameOfLife();
         totalNumberOfIterations = (int)controlP5.getController(TotalIterations).getValue();
         lastRecordedTime = millis();    
       }
-      else if(theEvent.getController().getName() == TimeBetweenIterations){ // Time between iterations
-        timeBetweenIterations = controlP5.getController(TimeBetweenIterations).getValue() * 1000;
+      else if(theEvent.getController().getName() == IterationLength){ // Time between iterations
+        timeBetweenIterations = controlP5.getController(IterationLength).getValue() * 1000;
       }    
       else if(theEvent.getController().getName() == InfiniteIterations){ // Iterate Forever
-         iteratingForever = !iteratingForever;
+         iteratingForever = controlP5.getController(InfiniteIterations).getValue() == 1; // If == 1, is true, else is false
       }
       else if(theEvent.getController().getName() == StopIterating){ // Stop Iterating
          totalNumberOfIterations = currentNumberOfIterations;
+         controlP5.getController(InfiniteIterations).setValue(0);
       }
       
       //
@@ -253,10 +450,13 @@ public class ControlsController{
       //
       
       else if(theEvent.getController().getName() == PlayNotes){ // PlayNotes
-        playNotes();
+        audioController.playNotes();
       }
       else if(theEvent.getController().getName() == AddToTrack){ // Save to AudioTrack1
-        saveNotes();
+        audioController.saveNotes();
+      }    
+      else if(theEvent.getController().getName() == NoteDuration){ // Time between iterations
+        audioController.setNoteDuration(controlP5.getController(NoteDuration).getValue());
       }    
       //
       // VOTING CONTROLS
@@ -267,8 +467,16 @@ public class ControlsController{
       }
       else if(theEvent.getController().getName() == AllowMoreThanOneWinner){ // Allow more than one winner per column
          allowMoreThanOneWinnerPerColumn = !allowMoreThanOneWinnerPerColumn;
-         countNeighbors(); //
-      }       
+         gameOfLifeController.countNeighbors(); //
+      }
+      
+      //
+      // COMMUNICATION CONTROLS
+      //
+      else if(theEvent.getController().getName() == ReceivingMessages){ // Count Neighbors
+         receivingMessages = !receivingMessages;
+         println("Receiving messages = " + receivingMessages);
+      }
     }
   }
 }
