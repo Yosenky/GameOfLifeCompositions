@@ -2,10 +2,7 @@
 // Object for handling all communication between this program and other programs
 // Currently only supports use with the GridMusic40 program
 
-OscP5 oscP5;
-NetAddress myRemoteLocation;
 
-boolean receivingMessages = false; // If true, allow messages to be received
 
 public class CommunicationController{
   

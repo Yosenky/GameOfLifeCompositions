@@ -2,60 +2,6 @@
 // Object for use controlling the controlP5 objects and events
 // Contains methods for creating and using controlP5 controls
 
-//
-// CONTROL P5 VARIABLES
-//
-ControlP5 controlP5;
-
-
-//
-// STRINGS FOR CONTROLLER NAMES
-//
-
-// Grid Controls
-String RandomizeGrid = "Randomize";
-String ChanceOfCellsBeingAlive = "Chance of life(%)";
-String ClearGrid = "Clear";
-String CellsPerRow = "Cells Per Row";
-String CellsPerColumn = "Cells Per Column";
-
-// Game of Life Controls
-String OneIteration = "One";
-String MultipleIterations = "Multiple";
-String TotalIterations = "Iterations to queue";
-String IterationLength = "Iteration length(s)";
-String InfiniteIterations = "Infinite";
-String StopIterating = "Stop";
-String IterationsText = "Current Iteration: ";
-
-// Audio Controls
-String PlayNotes = "Play Notes";
-String NoteDuration = "Note Duration(s)";
-String AddToTrack = "Save to track";
-
-// Voting Controls
-String ShowingNeighbors = "Show Most Neighbors";
-String AllowMoreThanOneWinner = "Allow more than one winner per column";
-
-// Communication Controls
-String ReceivingMessages = "Receive Messages";
-
-// Colors
-color activeToggleColor = color(14,220,55); // Color when toggle is active
-color inactiveToggleColor = color(0,0,0); // Color when toggle is inactive
-color hoveredToggleColor = color(80,80,80); // Color when toggle is being hovered over
-
-// UI Fonts
-PFont BarFont; // Font for bars at top of control groups
-PFont UIFont; // Regular UI Font
-PFont SmallerUIFont; // Smaller version of UI Font
-
-// Control Groups
-ControlGroup gridControls;
-ControlGroup gameOfLifeControls;
-ControlGroup audioControls;
-ControlGroup votingControls;
-ControlGroup communicationControls;
 
 
 public class ControlsController{
@@ -280,7 +226,18 @@ public class ControlsController{
              .showTickMarks(false)
              .setBroadcast(true)
              .getCaptionLabel()
-             .setColor(0);                                                                                                   
+             .setColor(0);   
+             
+    // Iterate then play 
+    controlP5.addBang(IterateThenPlay)
+             .setBroadcast(false)
+             .setPosition(0, width*17/144)
+             .setSize(width/36,width/36)
+             .setGroup(gameOfLifeControls)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);                
   }
   
   
@@ -300,7 +257,7 @@ public class ControlsController{
              .setColor(0);      
  
     // Save notes to track 1
-    controlP5.addBang(AddToTrack)
+    controlP5.addBang(AddToTrack1)
              .setBroadcast(false)
              .setPosition(0, width*2/36)
              .setSize(width/36,width/36)
@@ -309,6 +266,58 @@ public class ControlsController{
              .setBroadcast(true)
              .getCaptionLabel()
              .setColor(0); 
+
+    // Save notes to track 2
+    controlP5.addBang(AddToTrack2)
+             .setBroadcast(false)
+             .setPosition(width*4/36, width*2/36)
+             .setSize(width/36,width/36)
+             .setGroup(audioControls)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);  
+             
+    // Toggle Track1
+    controlP5.addToggle(ToggleTrack1)
+             .setBroadcast(false)
+             .setValue(false)
+             .setPosition(width*9/36,0)
+             .setSize(width/36,width/36)
+             .setGroup(audioControls)
+             .setColorForeground(hoveredToggleColor)
+             .setColorBackground(inactiveToggleColor)
+             .setColorActive(activeToggleColor)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);
+             
+    // Toggle Track2
+    controlP5.addToggle(ToggleTrack2)
+             .setBroadcast(false)
+             .setValue(false)
+             .setPosition(width*9/36,width*2/36)
+             .setSize(width/36,width/36)
+             .setGroup(audioControls)
+             .setColorForeground(hoveredToggleColor)
+             .setColorBackground(inactiveToggleColor)
+             .setColorActive(activeToggleColor)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);             
+             
+    // Play current grid's notes
+    controlP5.addBang(PlayCurrentGrid)
+             .setBroadcast(false)
+             .setPosition(width*4/36,0)
+             .setSize(width/36,width/36)
+             .setGroup(audioControls)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);              
              
     // Note duration slider
     controlP5.addSlider(NoteDuration)
@@ -345,6 +354,21 @@ public class ControlsController{
              .setBroadcast(true)
              .getCaptionLabel()
              .setColor(0);
+             
+    // Showing alive cells toggle
+    controlP5.addToggle(ShowAliveCells)
+             .setBroadcast(false)
+             .setValue(true)
+             .setPosition(width*4/36,0)
+             .setSize(width/36,width/36)
+             .setGroup(votingControls)
+             .setColorForeground(hoveredToggleColor)
+             .setColorBackground(inactiveToggleColor)
+             .setColorActive(activeToggleColor)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);             
  
     // Allow more than one winner per column toggle
     controlP5.addToggle(AllowMoreThanOneWinner)
@@ -408,13 +432,18 @@ public class ControlsController{
         totalNumberOfIterations = 0;
         gridController.clearGrid();
         iteratingForever = false;
+        controlP5.getController(InfiniteIterations).setValue(0);
         gameOfLifeController.countNeighbors(); // Count and mark the cells with the most neighbors
       }
       else if(theEvent.getController().getName() == CellsPerRow){ // Adjusts number of cells per row
         gridController.resizeGrid((int)controlP5.getController(CellsPerRow).getValue(), cellsPerColumn);
+        iteratingForever = false;
+        controlP5.getController(InfiniteIterations).setValue(0);
       }   
       else if(theEvent.getController().getName() == CellsPerColumn){ // Adjusts number of cells per column
         gridController.resizeGrid(cellsPerRow, (int)controlP5.getController(CellsPerColumn).getValue());
+        iteratingForever = false;
+        controlP5.getController(InfiniteIterations).setValue(0);
       }   
       
       //
@@ -444,17 +473,36 @@ public class ControlsController{
          totalNumberOfIterations = currentNumberOfIterations;
          controlP5.getController(InfiniteIterations).setValue(0);
       }
-      
+      else if(theEvent.getController().getName() == IterateThenPlay){ // Iterate the set amount of iterations, then play all notes that resulted
+        currentNumberOfIterations = 0;
+        currentNumberOfIterations++;
+        gameOfLifeController.gameOfLife();
+        totalNumberOfIterations = (int)controlP5.getController(TotalIterations).getValue();
+        lastRecordedTime = millis();  
+        iteratingThenPlaying = true;
+        noteStartTime = 0;
+      }      
       //
       // AUDIO CONTROLS
       //
       
-      else if(theEvent.getController().getName() == PlayNotes){ // PlayNotes
-        audioController.playNotes();
+      else if(theEvent.getController().getName() == PlayNotes){ // Play selected tracks
+        if(controlP5.getController(ToggleTrack1).getValue() == 1){
+          audioController.playNotes(track1);
+        }
+        if(controlP5.getController(ToggleTrack2).getValue() == 1){
+          audioController.playNotes(track2);
+        }
       }
-      else if(theEvent.getController().getName() == AddToTrack){ // Save to AudioTrack1
-        audioController.saveNotes();
-      }    
+      else if(theEvent.getController().getName() == AddToTrack1){ // Save notes to Track1
+        audioController.saveNotes(track1);
+      }
+      else if(theEvent.getController().getName() == AddToTrack2){ // Save notes to Track2
+        audioController.saveNotes(track2);
+      }     
+      else if(theEvent.getController().getName() == PlayCurrentGrid){ // Play the notes on the current grid
+        audioController.playCurrentNotes();
+      }        
       else if(theEvent.getController().getName() == NoteDuration){ // Time between iterations
         audioController.setNoteDuration(controlP5.getController(NoteDuration).getValue());
       }    
@@ -465,9 +513,12 @@ public class ControlsController{
       else if(theEvent.getController().getName() == ShowingNeighbors){ // Count Neighbors
          showingNeighborVotes = !showingNeighborVotes;
       }
+      else if(theEvent.getController().getName() == ShowAliveCells){ // Shows alive cells(use for only seeing winners)
+         showingAliveCells = controlP5.getController(ShowAliveCells).getValue() == 1;
+      }
       else if(theEvent.getController().getName() == AllowMoreThanOneWinner){ // Allow more than one winner per column
          allowMoreThanOneWinnerPerColumn = !allowMoreThanOneWinnerPerColumn;
-         gameOfLifeController.countNeighbors(); //
+         gameOfLifeController.countNeighbors(); // Counts the neighbors of each cell and colors all winners
       }
       
       //

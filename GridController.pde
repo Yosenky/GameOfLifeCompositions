@@ -1,31 +1,7 @@
 // Grid Controller Class
 // Creates a GridController object for ease of use and readabiltiy in the main file
 
-//
-// GRID VARIABLES
-//
 
-// Parameters for grid size
-int cellsPerRow    = 50;
-int cellsPerColumn = 50;
-float cellWidth;
-float cellHeight;
-int halfwayLineX; // X coordinate for line that cuts screen in half
-int maxCellsPerRow = 150;
-int maxCellsPerColumn = 150;
-int minCellsPerRow = 10;
-int minCellsPerColumn = 10;
-
-// Cell Arrays
-Cell[][] cells;
-Cell[][] cellsBuffer;
-
-// Cell colors
-color aliveColor = color(103,102,165);
-color deadColor = color(227,124,124);
-
-// Grid Generation
-int probabilityOfCellsBeingAlive = 20; // In percent, default is 15
 
 
 public class GridController{

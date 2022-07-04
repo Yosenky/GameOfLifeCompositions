@@ -1,17 +1,7 @@
 // Game of life controller class
 // Contains methods for running the game of life
 
-//
-// GAME OF LIFE VARIABLES
-//
-int totalNumberOfIterations = 0;
-int currentNumberOfIterations = 0;
-float timeBetweenIterations = 1000;  // in ms
-int lastRecordedTime = 0;
-boolean iteratingForever = false; // If true, iterates until manually stopped
-boolean showingNeighborVotes = false; // If true, highlights each cell with the most neighbors
-boolean lookingForCellWithMostNeighbors = true; // If true, search for first cell with most neighbors
-boolean allowMoreThanOneWinnerPerColumn = false; // If true, allows more than one cell per column to be marked with the most neighbors
+
 
 public class GameOfLifeController{
  
@@ -92,17 +82,19 @@ public class GameOfLifeController{
           maximumNeighbors = currentCellsNeighbors;
         }
       }
-      // Marks the cells that have the most neighbors
-      lookingForCellWithMostNeighbors = true; // Will be set to false upon first cell in column being marked
-      for(int j = 0; j < cellsPerColumn; j++){
-        if(cells[i][j].getNumberOfNeighbors() == maximumNeighbors && lookingForCellWithMostNeighbors){
-          cells[i][j].hasMostNeighbors(true);  // If has most neighbors
-          if(!allowMoreThanOneWinnerPerColumn){
-            lookingForCellWithMostNeighbors = false; 
+      if(maximumNeighbors != 0){
+        // Marks the cells that have the most neighbors
+        lookingForCellWithMostNeighbors = true; // Will be set to false upon first cell in column being marked
+        for(int j = 0; j < cellsPerColumn; j++){
+          if(cells[i][j].getNumberOfNeighbors() == maximumNeighbors && lookingForCellWithMostNeighbors){
+            cells[i][j].hasMostNeighbors(true);  // If has most neighbors
+            if(!allowMoreThanOneWinnerPerColumn){
+              lookingForCellWithMostNeighbors = false; 
+            }
+    
+          } else {
+            cells[i][j].hasMostNeighbors(false); // If doesn't have most neighbors
           }
-  
-        } else {
-          cells[i][j].hasMostNeighbors(false); // If doesn't have most neighbors
         }
       }
     }
@@ -116,6 +108,9 @@ public class GameOfLifeController{
       gameOfLifeController.gameOfLife();
       lastRecordedTime = millis();
       currentNumberOfIterations++;
+      if(iteratingThenPlaying){
+        
+      }
     }
   }
   
