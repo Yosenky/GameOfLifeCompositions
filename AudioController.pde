@@ -38,6 +38,7 @@ public class AudioController{
         if(cells[i][j].getHasMaximumNeighbors()){
           out.playNote( noteStartTime, noteDuration, new SineInstrument( 300 + 20*j) );
           noteStartTime += noteDuration;
+          println(noteStartTime);
         }
       }
     }  

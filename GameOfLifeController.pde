@@ -78,6 +78,7 @@ public class GameOfLifeController{
       int currentCellsNeighbors = 0; // The current cells neighbor count
       for(int j = 0; j < cellsPerColumn; j++){
         currentCellsNeighbors = cells[i][j].getNumberOfNeighbors();
+        cells[i][j].hasMostNeighbors(false); // Reset all cells back to default of not being the winner
         if(currentCellsNeighbors >= maximumNeighbors){
           maximumNeighbors = currentCellsNeighbors;
         }
@@ -90,10 +91,7 @@ public class GameOfLifeController{
             cells[i][j].hasMostNeighbors(true);  // If has most neighbors
             if(!allowMoreThanOneWinnerPerColumn){
               lookingForCellWithMostNeighbors = false; 
-            }
-    
-          } else {
-            cells[i][j].hasMostNeighbors(false); // If doesn't have most neighbors
+            }    
           }
         }
       }
