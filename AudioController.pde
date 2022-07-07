@@ -33,7 +33,14 @@ public class AudioController{
   
   // Queues notes to be played later
   void queueNotes(){
-   out.playNote( 
+   for(int i  = 0; i < cellsPerRow; i++){
+      for(int j = 0; j < cellsPerColumn; j++){
+        if(cells[i][j].getHasMaximumNeighbors()){
+          out.playNote( noteStartTime, noteDuration, new SineInstrument( 300 + 20*j) );
+          noteStartTime += noteDuration;
+        }
+      }
+    }  
   }
   
   

@@ -105,11 +105,14 @@ public class GameOfLifeController{
   void iterationTimer(){
     // Iteration timer
     if((millis() - lastRecordedTime > timeBetweenIterations) && ( currentNumberOfIterations < totalNumberOfIterations|| iteratingForever)){
-      gameOfLifeController.gameOfLife();
-      lastRecordedTime = millis();
-      currentNumberOfIterations++;
-      if(iteratingThenPlaying){
-        
+      gameOfLifeController.gameOfLife(); // One iteration of game of life
+      lastRecordedTime = millis(); // Update time
+      currentNumberOfIterations++; // Add iteration
+      if(iteratingThenPlaying){ // If iterating then playing was pressed
+        audioController.queueNotes(); // Queue current grid
+        if(currentNumberOfIterations == totalNumberOfIterations){ // If last iteration, play notes
+           out.resumeNotes(); 
+        }
       }
     }
   }

@@ -101,6 +101,7 @@ String ToggleTrack1 = "Track 1";
 String ToggleTrack2 = "Track 2";
 String PlayCurrentGrid = "Play current grid";
 
+
 // Voting Controls
 String ShowingNeighbors = "Show Most Neighbors";
 String AllowMoreThanOneWinner = "Allow more than one winner per column";

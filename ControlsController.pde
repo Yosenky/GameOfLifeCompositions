@@ -480,7 +480,8 @@ public class ControlsController{
         totalNumberOfIterations = (int)controlP5.getController(TotalIterations).getValue();
         lastRecordedTime = millis();  
         iteratingThenPlaying = true;
-        noteStartTime = 0;
+        noteStartTime = 0; // resets the start time for the first note
+        out.pauseNotes();
       }      
       //
       // AUDIO CONTROLS
