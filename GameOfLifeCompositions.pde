@@ -1,3 +1,5 @@
+import beads.*;
+
 import netP5.*;
 import oscP5.*;
 
@@ -100,6 +102,7 @@ String AddToTrack2 = "Save to track 2";
 String ToggleTrack1 = "Track 1";
 String ToggleTrack2 = "Track 2";
 String PlayCurrentGrid = "Play current grid";
+String PlayGridUsingBeads = "Play grid using beads";
 
 
 // Voting Controls
@@ -136,6 +139,15 @@ AudioOutput out;
 float noteDuration = .25; // Duration of each note, in seconds
 Note[] track1 = new Note[maxCellsPerRow];
 Note[] track2 = new Note[maxCellsPerRow];
+
+// BEADS VARIABLES
+AudioContext ac; // AudioContext
+WavePlayer wp; // WavePlayer
+beads.Gain masterGain; // Master gain, must use beads.Gain because of minim(?)
+Glide gainGlide; // Gain glide
+Glide frequencyGlide; // Frequency glide
+Envelope frequencyEnvelope; // Envelope to control the frequency
+
 
 //
 // OBJECT VARIABLES
@@ -174,6 +186,9 @@ void setup(){
   // OscP5 initialization
   oscP5 = new OscP5(this,12000); // Starts oscP5, listening for incoming messages at port 12000
   myRemoteLocation = new NetAddress("127.0.1.1", 12000); // IP address and port number for this program
+  
+  // Beads initialization
+  audioController.setupBeads();
 }
 
 

@@ -25,7 +25,7 @@ public class ControlsController{
   void createFonts(){
     BarFont       = createFont("unispaceregular.ttf",width/96);
     UIFont        = createFont("Candal.ttf",24);
-    SmallerUIFont = createFont("MonospaceTypewriter.ttf", 16);
+    SmallerUIFont = createFont("MonospaceTypewriter.ttf", 14);
     controlP5.setFont(BarFont);
   }
   
@@ -249,7 +249,7 @@ public class ControlsController{
     controlP5.addBang(PlayNotes)
              .setBroadcast(false)
              .setPosition(0,0)
-             .setSize(width/36,width/36)
+             .setSize(width/50,width/50)
              .setGroup(audioControls)
              .setFont(SmallerUIFont)
              .setBroadcast(true)
@@ -259,8 +259,8 @@ public class ControlsController{
     // Save notes to track 1
     controlP5.addBang(AddToTrack1)
              .setBroadcast(false)
-             .setPosition(0, width*2/36)
-             .setSize(width/36,width/36)
+             .setPosition(0, width*2/50)
+             .setSize(width/50,width/50)
              .setGroup(audioControls)
              .setFont(SmallerUIFont)
              .setBroadcast(true)
@@ -270,8 +270,8 @@ public class ControlsController{
     // Save notes to track 2
     controlP5.addBang(AddToTrack2)
              .setBroadcast(false)
-             .setPosition(width*4/36, width*2/36)
-             .setSize(width/36,width/36)
+             .setPosition(width*4/36, width*2/50)
+             .setSize(width/50,width/50)
              .setGroup(audioControls)
              .setFont(SmallerUIFont)
              .setBroadcast(true)
@@ -283,7 +283,7 @@ public class ControlsController{
              .setBroadcast(false)
              .setValue(false)
              .setPosition(width*9/36,0)
-             .setSize(width/36,width/36)
+             .setSize(width/50,width/50)
              .setGroup(audioControls)
              .setColorForeground(hoveredToggleColor)
              .setColorBackground(inactiveToggleColor)
@@ -297,8 +297,8 @@ public class ControlsController{
     controlP5.addToggle(ToggleTrack2)
              .setBroadcast(false)
              .setValue(false)
-             .setPosition(width*9/36,width*2/36)
-             .setSize(width/36,width/36)
+             .setPosition(width*9/36,width*2/50)
+             .setSize(width/50,width/50)
              .setGroup(audioControls)
              .setColorForeground(hoveredToggleColor)
              .setColorBackground(inactiveToggleColor)
@@ -312,17 +312,28 @@ public class ControlsController{
     controlP5.addBang(PlayCurrentGrid)
              .setBroadcast(false)
              .setPosition(width*4/36,0)
-             .setSize(width/36,width/36)
+             .setSize(width/50,width/50)
              .setGroup(audioControls)
              .setFont(SmallerUIFont)
              .setBroadcast(true)
              .getCaptionLabel()
-             .setColor(0);              
+             .setColor(0); 
+             
+    // Play grid using beads
+    controlP5.addBang(PlayGridUsingBeads)
+             .setBroadcast(false)
+             .setPosition(0,width*4/50)
+             .setSize(width/50,width/50)
+             .setGroup(audioControls)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);    
              
     // Note duration slider
     controlP5.addSlider(NoteDuration)
              .setBroadcast(false)
-             .setPosition(0, width*4/36)
+             .setPosition(0, width*6/50)
              .setSize(width/10, height/36)
              .setRange(.05, 2)
              .setValue(.25)
@@ -332,7 +343,9 @@ public class ControlsController{
              .showTickMarks(false)
              .setBroadcast(true)
              .getCaptionLabel()
-             .setColor(0);                                                                                             
+             .setColor(0);  
+             
+
   }
   
   
@@ -504,6 +517,9 @@ public class ControlsController{
       else if(theEvent.getController().getName() == PlayCurrentGrid){ // Play the notes on the current grid
         audioController.playCurrentNotes();
       }        
+      else if(theEvent.getController().getName() == PlayGridUsingBeads){ // Play the notes on the current grid using BEADS library
+        audioController.playBeads();
+      } 
       else if(theEvent.getController().getName() == NoteDuration){ // Time between iterations
         audioController.setNoteDuration(controlP5.getController(NoteDuration).getValue());
       }    

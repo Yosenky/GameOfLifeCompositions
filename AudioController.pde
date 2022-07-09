@@ -36,9 +36,8 @@ public class AudioController{
    for(int i  = 0; i < cellsPerRow; i++){
       for(int j = 0; j < cellsPerColumn; j++){
         if(cells[i][j].getHasMaximumNeighbors()){
-          out.playNote( noteStartTime, noteDuration, new SineInstrument( 300 + 20*j) );
+          out.playNote( noteStartTime, noteDuration, new SineInstrument( 300 + 20*j) ); // Add notes in each column to output, don't play yet
           noteStartTime += noteDuration;
-          println(noteStartTime);
         }
       }
     }  
@@ -64,6 +63,30 @@ public class AudioController{
   // Changes the note duration
   void setNoteDuration(float newNoteDuration){
     noteDuration = newNoteDuration;
+  }
+  
+  
+  // Sets up the variables for the BEADS library
+  void setupBeads(){
+    ac = AudioContext.getDefaultContext();
+    frequencyEnvelope = new Envelope(250);
+    wp = new WavePlayer(frequencyEnvelope, Buffer.SINE); 
+    masterGain = new beads.Gain(1,1);
+    masterGain.addInput(wp);
+  }
+  
+  // Plays the current grid using the BEADS library
+  void playBeads(){
+    for(int i  = 0; i < cellsPerRow; i++){
+      for(int j = 0; j < cellsPerColumn; j++){
+        if(cells[i][j].getHasMaximumNeighbors()){
+          frequencyEnvelope.addSegment(500 - 50*j, 100);
+        }
+      }
+    }
+    frequencyEnvelope.addSegment(0,500);
+    ac.out.addInput(masterGain);
+    ac.start();
   }
     
 }
