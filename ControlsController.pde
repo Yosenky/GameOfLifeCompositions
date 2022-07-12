@@ -15,7 +15,8 @@ public class ControlsController{
     createControlGroups();
     createGridControls();
     createGameOfLifeControls();
-    createAudioControls();
+    createMinimControls();
+    createBeadsControls();
     createVotingControls(); 
     createCommunicationControls();
   }
@@ -44,11 +45,11 @@ public class ControlsController{
     gameOfLifeControls.setWidth(width/6);
     gameOfLifeControls.setBarHeight(height/40);
     
-    // Audio controls
-    audioControls = controlP5.addGroup("Audio Controls", halfwayLineX + 15, height*20/30);
-    audioControls.setBackgroundHeight((height*34/40)/2);
-    audioControls.setWidth(width/6);
-    audioControls.setBarHeight(height/40);    
+    // Minim controls
+    minimControls = controlP5.addGroup("Minim Controls", halfwayLineX + 15, height*20/30);
+    minimControls.setBackgroundHeight((height*34/40)/2);
+    minimControls.setWidth(width/6);
+    minimControls.setBarHeight(height/40);    
 
     // Voting controls
     votingControls = controlP5.addGroup("Voting Controls", halfwayLineX * 3/2, height*2/30);
@@ -60,7 +61,13 @@ public class ControlsController{
     communicationControls = controlP5.addGroup("Communication Controls", halfwayLineX * 3/2, height*10/30);
     communicationControls.setBackgroundHeight((height*34/40)/2);
     communicationControls.setWidth(width/6);
-    communicationControls.setBarHeight(height/40);   
+    communicationControls.setBarHeight(height/40); 
+    
+    // Beads controls
+    beadsControls = controlP5.addGroup("Beads Controls", halfwayLineX * 3/2, height*20/30);
+    beadsControls.setBackgroundHeight((height*34/40)/2);
+    beadsControls.setWidth(width/6);
+    beadsControls.setBarHeight(height/40); 
   }
   
   //
@@ -242,15 +249,15 @@ public class ControlsController{
   
   
   //
-  // Creates Audio Controls
+  // Creates Minim Controls
   //
-  void createAudioControls(){
+  void createMinimControls(){
     // Play Notes
     controlP5.addBang(PlayNotes)
              .setBroadcast(false)
              .setPosition(0,0)
              .setSize(width/50,width/50)
-             .setGroup(audioControls)
+             .setGroup(minimControls)
              .setFont(SmallerUIFont)
              .setBroadcast(true)
              .getCaptionLabel()
@@ -261,7 +268,7 @@ public class ControlsController{
              .setBroadcast(false)
              .setPosition(0, width*2/50)
              .setSize(width/50,width/50)
-             .setGroup(audioControls)
+             .setGroup(minimControls)
              .setFont(SmallerUIFont)
              .setBroadcast(true)
              .getCaptionLabel()
@@ -272,7 +279,7 @@ public class ControlsController{
              .setBroadcast(false)
              .setPosition(width*4/36, width*2/50)
              .setSize(width/50,width/50)
-             .setGroup(audioControls)
+             .setGroup(minimControls)
              .setFont(SmallerUIFont)
              .setBroadcast(true)
              .getCaptionLabel()
@@ -282,9 +289,9 @@ public class ControlsController{
     controlP5.addToggle(ToggleTrack1)
              .setBroadcast(false)
              .setValue(false)
-             .setPosition(width*9/36,0)
+             .setPosition(0,width*4/50)
              .setSize(width/50,width/50)
-             .setGroup(audioControls)
+             .setGroup(minimControls)
              .setColorForeground(hoveredToggleColor)
              .setColorBackground(inactiveToggleColor)
              .setColorActive(activeToggleColor)
@@ -297,9 +304,9 @@ public class ControlsController{
     controlP5.addToggle(ToggleTrack2)
              .setBroadcast(false)
              .setValue(false)
-             .setPosition(width*9/36,width*2/50)
+             .setPosition(width*4/36,width*4/50)
              .setSize(width/50,width/50)
-             .setGroup(audioControls)
+             .setGroup(minimControls)
              .setColorForeground(hoveredToggleColor)
              .setColorBackground(inactiveToggleColor)
              .setColorActive(activeToggleColor)
@@ -313,22 +320,11 @@ public class ControlsController{
              .setBroadcast(false)
              .setPosition(width*4/36,0)
              .setSize(width/50,width/50)
-             .setGroup(audioControls)
+             .setGroup(minimControls)
              .setFont(SmallerUIFont)
              .setBroadcast(true)
              .getCaptionLabel()
-             .setColor(0); 
-             
-    // Play grid using beads
-    controlP5.addBang(PlayGridUsingBeads)
-             .setBroadcast(false)
-             .setPosition(0,width*4/50)
-             .setSize(width/50,width/50)
-             .setGroup(audioControls)
-             .setFont(SmallerUIFont)
-             .setBroadcast(true)
-             .getCaptionLabel()
-             .setColor(0);    
+             .setColor(0);           
              
     // Note duration slider
     controlP5.addSlider(NoteDuration)
@@ -337,7 +333,7 @@ public class ControlsController{
              .setSize(width/10, height/36)
              .setRange(.05, 2)
              .setValue(.25)
-             .setGroup(audioControls)
+             .setGroup(minimControls)
              .setFont(SmallerUIFont)
              .setNumberOfTickMarks(40)
              .showTickMarks(false)
@@ -345,9 +341,40 @@ public class ControlsController{
              .getCaptionLabel()
              .setColor(0);  
              
-
   }
   
+  
+  //
+  // Create Beads Controls
+  //
+  void createBeadsControls(){
+    // Play grid using beads
+    controlP5.addBang(PlayGridUsingBeads)
+             .setBroadcast(false)
+             .setPosition(0,0)
+             .setSize(width/50,width/50)
+             .setGroup(beadsControls)
+             .setFont(SmallerUIFont)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0); 
+             
+    // Adjust transition time between notes
+    controlP5.addSlider(BeadsNotesTransitionTimes)
+             .setBroadcast(false)
+             .setPosition(0, width*2/50)
+             .setSize(width/10, height/36)
+             .setRange(.5, 3)
+             .setValue(1)
+             .setGroup(beadsControls)
+             .setFont(SmallerUIFont)
+             .setNumberOfTickMarks(6)
+             .showTickMarks(false)
+             .setBroadcast(true)
+             .getCaptionLabel()
+             .setColor(0);  
+  }
+
   
   //
   // Create Voting Controls
@@ -497,7 +524,7 @@ public class ControlsController{
         out.pauseNotes();
       }      
       //
-      // AUDIO CONTROLS
+      // MINIM CONTROLS
       //
       
       else if(theEvent.getController().getName() == PlayNotes){ // Play selected tracks
@@ -522,7 +549,11 @@ public class ControlsController{
       } 
       else if(theEvent.getController().getName() == NoteDuration){ // Time between iterations
         audioController.setNoteDuration(controlP5.getController(NoteDuration).getValue());
-      }    
+      }
+      //
+      // BEADS CONTROLS
+      //
+      
       //
       // VOTING CONTROLS
       //

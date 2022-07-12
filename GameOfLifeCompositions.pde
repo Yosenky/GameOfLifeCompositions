@@ -94,15 +94,18 @@ String StopIterating = "Stop";
 String IterationsText = "Current Iteration: ";
 String IterateThenPlay = "Iterate then play";
 
-// Audio Controls
+// Minim Controls
 String PlayNotes = "Play selected tracks";
 String NoteDuration = "Note Duration(s)";
 String AddToTrack1 = "Save to track 1";
 String AddToTrack2 = "Save to track 2";
-String ToggleTrack1 = "Track 1";
-String ToggleTrack2 = "Track 2";
+String ToggleTrack1 = "Enable track 1";
+String ToggleTrack2 = "Enable track 2";
 String PlayCurrentGrid = "Play current grid";
+
+// Beads Controls
 String PlayGridUsingBeads = "Play grid using beads";
+String BeadsNotesTransitionTimes = "Transition time between notes(s)";
 
 
 // Voting Controls
@@ -126,7 +129,8 @@ PFont SmallerUIFont; // Smaller version of UI Font
 // Control Groups
 ControlGroup gridControls;
 ControlGroup gameOfLifeControls;
-ControlGroup audioControls;
+ControlGroup minimControls;
+ControlGroup beadsControls;
 ControlGroup votingControls;
 ControlGroup communicationControls;
 

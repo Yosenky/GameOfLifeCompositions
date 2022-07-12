@@ -80,7 +80,11 @@ public class AudioController{
     for(int i  = 0; i < cellsPerRow; i++){
       for(int j = 0; j < cellsPerColumn; j++){
         if(cells[i][j].getHasMaximumNeighbors()){
-          frequencyEnvelope.addSegment(500 - 50*j, 100);
+          //if(cells[i][j].getNumberOfNeighbors() == 2){ // If cell has exactly 2 neighbors, use a tremolo on the note
+           // Tremolo??
+          //} else {
+          frequencyEnvelope.addSegment(500 - 50*j, controlP5.getController(BeadsNotesTransitionTimes).getValue() * 1000);
+          //}
         }
       }
     }
