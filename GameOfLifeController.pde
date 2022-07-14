@@ -119,7 +119,7 @@ public class GameOfLifeController{
   // Displays the current number of iterations in the top right corner
   void displayIterationText(){
     // Iteration Text
-    textSize(24);
+    textSize(width/96); // Font size is 19 at 1800 width
     fill(0);
     String currentIterationText = "Current Iteration:  " + currentNumberOfIterations + " / " + totalNumberOfIterations;
     text(currentIterationText, width*34/40,height/40);

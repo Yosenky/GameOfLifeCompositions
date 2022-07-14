@@ -4,13 +4,13 @@
 public class Note{
   float noteStartTime; // Note start time, in ms
   float noteDuration; // Note duration, in seconds
-  SineInstrument sineInstrument; // Sine Instrument
+  ToneInstrument toneInstrument; // Sine Instrument
   
   // Constructor for sine instrument note
-  public Note(float noteStartTime, float noteDuration, SineInstrument sineInstrument){
+  public Note(float noteStartTime, float noteDuration, ToneInstrument toneInstrument){
     this.noteStartTime = noteStartTime;
     this.noteDuration = noteDuration;
-    this.sineInstrument = sineInstrument;
+    this.toneInstrument = toneInstrument;
   }
   
   
@@ -25,8 +25,8 @@ public class Note{
   }
   
   // getSineInstrument returns sineInstrument
-  SineInstrument getSineInstrument(){
-   return sineInstrument; 
+  ToneInstrument getToneInstrument(){
+   return toneInstrument; 
   }
   
   

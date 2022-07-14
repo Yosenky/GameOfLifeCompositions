@@ -71,6 +71,7 @@ float noteStartTime = 0; // Note start time, used when iterating then playing
 // CONTROL P5 VARIABLES
 //
 ControlP5 controlP5;
+RadioButton minimWaveformsRadio;
 
 
 //
@@ -102,6 +103,13 @@ String AddToTrack2 = "Save to track 2";
 String ToggleTrack1 = "Enable track 1";
 String ToggleTrack2 = "Enable track 2";
 String PlayCurrentGrid = "Play current grid";
+String minimWaveforms = "Minim waveform";
+String minimSineWave = "SINE";
+String minimTriangleWave = "TRIANGLE";
+String minimSawWave = "SAW";
+String minimSquareWave = "SQUARE";
+String minimQuarterPulseWave = "QUARTERPULSE";
+
 
 // Beads Controls
 String PlayGridUsingBeads = "Play grid using beads";
@@ -135,14 +143,21 @@ ControlGroup votingControls;
 ControlGroup communicationControls;
 
 //
-// AUDIO VARIABLES
+// MINIM VARIABLES
 //
 Minim minim;
 AudioOutput out;
+Waveform waveForm = Waves.SINE;
 
 float noteDuration = .25; // Duration of each note, in seconds
 Note[] track1 = new Note[maxCellsPerRow];
 Note[] track2 = new Note[maxCellsPerRow];
+// Amplitude of notes to prevent audio clipping. - stehnce0
+float amplitude = 0.4;
+float adsr[] = new float[4];
+
+
+
 
 // BEADS VARIABLES
 AudioContext ac; // AudioContext
@@ -166,7 +181,7 @@ CommunicationController communicationController; // Contains methods pertaining 
 
 void setup(){
   //fullScreen();
-  size(1800,950);
+  size(800,600);
   
   // OBJECT INITIALIZATION
   gridController = new GridController();
@@ -186,6 +201,10 @@ void setup(){
   // Minim initialization
   minim = new Minim(this);
   out = minim.getLineOut();
+  adsr[0]=0.01; // base adsr values - charles
+  adsr[1]=0.05;
+  adsr[2]=0.5;
+  adsr[3]=0.5;
   
   // OscP5 initialization
   oscP5 = new OscP5(this,12000); // Starts oscP5, listening for incoming messages at port 12000

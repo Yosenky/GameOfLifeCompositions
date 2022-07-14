@@ -24,9 +24,9 @@ public class ControlsController{
   
   // Creates all fonts for use in UI
   void createFonts(){
-    BarFont       = createFont("unispaceregular.ttf",width/96);
-    UIFont        = createFont("Candal.ttf",24);
-    SmallerUIFont = createFont("MonospaceTypewriter.ttf", 14);
+    BarFont       = createFont("unispaceregular.ttf",width/96); // Font size is 19 at 1800 width
+    UIFont        = createFont("Candal.ttf",width/75); // Font size is 24 at 1800 width
+    SmallerUIFont = createFont("MonospaceTypewriter.ttf", width/129); // Font size is 14 at 1800 width
     controlP5.setFont(BarFont);
   }
   
@@ -339,8 +339,30 @@ public class ControlsController{
              .showTickMarks(false)
              .setBroadcast(true)
              .getCaptionLabel()
-             .setColor(0);  
+             .setColor(0)
+             ;
              
+  // Waveform radio buttons           
+  minimWaveformsRadio = controlP5.addRadioButton(minimWaveforms)
+          .setPosition(0, width*7/50)
+          .setSize(width/50, width/50)
+          .setGroup(minimControls)          
+          .setItemsPerRow(5)
+          .setSpacingColumn(width*2/50)
+          .setColorBackground(inactiveToggleColor)
+          .setColorActive(activeToggleColor)
+          .addItem(minimSineWave,0)
+          .addItem(minimSquareWave,1)
+          .addItem(minimTriangleWave,2)
+          .addItem(minimSawWave,3)
+          .addItem(minimQuarterPulseWave,4)
+          .activate(0);
+  // Sets all the font size/color for each label, radio buttons are weird.
+  for(Toggle t:minimWaveformsRadio.getItems()) {
+     t.getCaptionLabel().setFont(SmallerUIFont);
+     t.getCaptionLabel().setColor(0);
+   }
+              
   }
   
   
@@ -550,6 +572,7 @@ public class ControlsController{
       else if(theEvent.getController().getName() == NoteDuration){ // Time between iterations
         audioController.setNoteDuration(controlP5.getController(NoteDuration).getValue());
       }
+
       //
       // BEADS CONTROLS
       //
@@ -576,6 +599,31 @@ public class ControlsController{
          receivingMessages = !receivingMessages;
          println("Receiving messages = " + receivingMessages);
       }
+    }
+    
+    // Radio button reception because radio buttons are special! :D
+    if(theEvent.isFrom(minimWaveformsRadio)){ // Changing waveform based on radio value
+        switch((int)theEvent.getGroup().getValue())
+          {
+            case 0: 
+            waveForm = Waves.SINE;
+              break;
+            case 1:
+            waveForm = Waves.SQUARE;
+            println("TRINAGLE");
+              break;
+            case 2:
+            waveForm = Waves.TRIANGLE;
+              break;    
+            case 3:
+            waveForm = Waves.SAW;
+              break;      
+            case 4:
+            waveForm = Waves.QUARTERPULSE;
+              break;     
+            default: break; 
+          }
+              println(waveForm);
     }
   }
 }
