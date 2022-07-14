@@ -181,7 +181,7 @@ CommunicationController communicationController; // Contains methods pertaining 
 
 void setup(){
   //fullScreen();
-  size(800,600);
+  size(1800,950);
   
   // OBJECT INITIALIZATION
   gridController = new GridController();
